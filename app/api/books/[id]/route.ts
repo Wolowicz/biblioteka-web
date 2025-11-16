@@ -1,20 +1,55 @@
-// app/api/books/[id]/route.ts
-import { NextResponse } from "next/server";
-import { getBookById } from "../../../_data/books";
+import { NextRequest, NextResponse } from "next/server";
+import pool from "@/lib/db";
 
 export async function GET(
-  _req: Request,
-  ctx: { params: Promise<{ id: string }> } // ⬅️ params jako Promise
+  _req: NextRequest,
+  context: { params: Promise<{ id: string }> } // ⬅ tu też Promise
 ) {
-  const { id } = await ctx.params;          // ⬅️ konieczne await
+  const { id } = await context.params;        // ⬅ await na params
   const numericId = Number(id);
 
   if (!Number.isFinite(numericId) || numericId <= 0) {
-    return NextResponse.json({ error: "Bad id" }, { status: 400 });
+    return NextResponse.json({ error: "Złe ID" }, { status: 400 });
   }
 
-  const book = getBookById(numericId);
-  if (!book) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  try {
+    const [rows] = await pool.query(
+      `
+      SELECT
+        k.KsiazkaId AS id,
+        k.Tytul AS title,
+        COALESCE(GROUP_CONCAT(a.ImieNazwisko SEPARATOR ', '), 'Brak autora') AS authors,
+        k.numerISBN AS isbn,
+        k.Wydawnictwo AS publisher,
+        k.Rok AS year,
+        (k.DostepneEgzemplarze > 0) AS available
+      FROM Ksiazki k
+      LEFT JOIN KsiazkiAutorzy ka ON ka.KsiazkaId = k.KsiazkaId
+      LEFT JOIN Autorzy a ON a.AutorId = ka.AutorId
+      WHERE k.KsiazkaId = ?
+      GROUP BY
+        k.KsiazkaId,
+        k.Tytul,
+        k.numerISBN,
+        k.Wydawnictwo,
+        k.Rok,
+        k.DostepneEgzemplarze
+      LIMIT 1;
+      `,
+      [numericId]
+    );
 
-  return NextResponse.json(book);
+    const list = rows as any[];
+    if (list.length === 0) {
+      return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
+    }
+
+    return NextResponse.json(list[0]);
+  } catch (err) {
+    console.error("DB error /api/books/[id]:", err);
+    return NextResponse.json(
+      { error: "Błąd bazy danych" },
+      { status: 500 }
+    );
+  }
 }
