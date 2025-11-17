@@ -2,7 +2,6 @@
 // Typy ról w systemie - trzy poziomy uprawnień
 export type UserRole = "USER" | "LIBRARIAN" | "ADMIN";
 
-// To będzie nam pomagało w dopasowaniu motywu do roli
 export function getRoleTheme(role: UserRole) {
   // zwracamy klasy Tailwind dla body / tła w zależności od roli
   switch (role) {

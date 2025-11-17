@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState } from "react";//Importujemy hook useState.Hook pozwala stworzyć zmienne „żyjące” wewnątrz komponentu — tutaj będzie to stan przycisku (np. idle, loading, success).
 
 export default function ReserveButton({
   bookId,
   available,
 }: {
-  bookId: number;
+  bookId: number; //identyfikator książki
   available: boolean;
 }) {
   const [status, setStatus] =
@@ -16,20 +16,14 @@ export default function ReserveButton({
     if (!available || status === "loading") return;
     setStatus("loading");
 
-    // 🧪 DEMO: udajemy żądanie do API
+    // póki co DEMO: udajemy żądanie do API, fakowe obietnica do połączenia z bazą (to do wysłanie fetch POST do /api/reservations)
     await new Promise((r) => setTimeout(r, 700));
-
-    // 💬 W prawdziwej wersji tu poszłoby:
-    // fetch("/api/reservations", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ bookId }),
-    // });
 
     setStatus("success");
   };
 
   const disabled = !available || status === "loading" || status === "success";
+//Przycisk jest zablokowany, gdy:książka jest niedostępna
 
   return (
     <div>
@@ -54,7 +48,7 @@ export default function ReserveButton({
 
       {status === "success" && (
         <p className="mt-2 text-green-700 bg-green-100 border border-green-300 rounded px-3 py-2">
-          ✅ Zarezerwowano (demo)
+          Zarezerwowano (demo)
         </p>
       )}
     </div>

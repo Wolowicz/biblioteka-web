@@ -13,6 +13,8 @@ export default function BackButton() {
       router.back();
     }
   };
+//„Jeśli użytkownik wszedł na stronę z listy książek – wróć do listy.
+//Jeśli wszedł bezpośrednio z linka i nie ma historii – przenieś go na /.”
 
   return (
     <button

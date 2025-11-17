@@ -92,10 +92,12 @@ Struktura projektu: biblioteka-web/
 5. Komunikacja z bazą danych
    Aplikacja wykorzystuje plik `.env.local` do konfiguracji połączenia:
 
+```
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=
 DB_NAME=biblioteka
+```
 
 Połączenie realizowane jest przy użyciu mysql2/promise.
 Komunikacja obejmuje m.in.:
@@ -134,15 +136,15 @@ Dane pobierane są poprzez endpoint API odpowiedzialny za zapytanie do bazy.
 
 8. Uruchamianie aplikacji
    Instalacja zależności:
-
+```
 npm install
-
+```
 Konfiguracja bazy danych poprzez plik `.env.local`.
 
 Uruchamianie aplikacji:
-
+```
 npm run dev
-
+```
 Dostęp przez przeglądarkę:
 
 [http://localhost:3000](http://localhost:3000)

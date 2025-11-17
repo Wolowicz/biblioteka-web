@@ -1,8 +1,8 @@
 // app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import pool from "@/lib/db";
-import type { UserRole } from "@/lib/auth";
+import bcrypt from "bcryptjs"; // biblioteka do sprawdzania hasła (hashowanie hasła algorytmem blowfish)
+import pool from "@/lib/db"; // połączenie do bazy danych
+import type { UserRole } from "@/lib/auth"; // typ ról użytkowników
 
 type DbUserRow = {
   UzytkownikId: number;
@@ -13,7 +13,7 @@ type DbUserRow = {
   NazwaRoli: "ADMIN" | "BIBLIOTEKARZ" | "CZYTELNIK";
 };
 
-// pomocnicza funkcja: baza → rola w aplikacji
+// pomocnicza funkcja: baza → rola w aplikacji 
 function mapDbRoleToUserRole(dbRole: DbUserRow["NazwaRoli"]): UserRole {
   switch (dbRole) {
     case "ADMIN":

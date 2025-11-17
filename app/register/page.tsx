@@ -10,6 +10,7 @@ export default function RegisterPage() {
     password: "",
   });
 
+  //Trzymam wszystkie pola formularza w jednym obiekcie form.
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export default function RegisterPage() {
       setSuccess("Konto utworzone. Możesz się zalogować.");
       setForm({ firstName: "", lastName: "", email: "", password: "" });
     } catch (err) {
-      setError("Problem z połączeniem");
+      setError("Problem z połączeniem"); // W catch – komunikat o problemie z siecią.
     } finally {
       setLoading(false);
     }

@@ -1,8 +1,8 @@
 // app/api/auth/register/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import pool from "@/lib/db";
-import { validatePassword } from "@/lib/auth";
+import bcrypt from "bcryptjs"; // biblioteka do hashowania haseł (hashowanie hasła algorytmem blowfish)
+import pool from "@/lib/db"; // połączenie do bazy danych
+import { validatePassword } from "@/lib/auth"; // funkcja do walidacji hasła z lib/auth.ts
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,10 +37,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3) Hashujemy hasło bcryptem
-    const passwordHash = await bcrypt.hash(password, 10);
+    // 3) Hashujemy hasło bcryptem algorytmem blowfish
+    const passwordHash = await bcrypt.hash(password, 10); // 10 to koszt (im wyższy, tym bezpieczniej, ale wolniej)
 
-    // 4) Pobieramy RolaId dla roli CZYTELNIK (z Twojego seeda)
+    // 4) Pobieramy RolaId dla roli CZYTELNIK jako domyłśna rola nowego użytkownika
     const [rolesRows] = await pool.query(
       "SELECT RolaId FROM Role WHERE NazwaRoli = 'CZYTELNIK'"
     );

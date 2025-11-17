@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation"; 
-import { getRoleTheme, UserRole } from "@/lib/auth";
+import { useState } from "react"; //stany formularza
+import { useRouter } from "next/navigation"; //nawigacja po zalogowaniu (router.push).
+import { getRoleTheme, UserRole } from "@/lib/auth";//funkcja, która dobiera tło w zależności od roli.
 
 export default function LoginPage() {
   const router = useRouter(); 
@@ -20,6 +20,7 @@ export default function LoginPage() {
   setError(null);
   setLoading(true);
 
+  //Wysyłam zapytanie POST na mój endpoint logowania. Przekazuję email+password jako JSON i Odbieram JSON z odpowiedzi.
   try {
     const res = await fetch("/api/auth/login", {
       method: "POST",
@@ -56,7 +57,7 @@ export default function LoginPage() {
     <div
       className={`min-h-screen flex items-center justify-center px-4 ${
         loggedRole
-          ? getRoleTheme(loggedRole)
+          ? getRoleTheme(loggedRole) //tło w zależności od roli (Zwraca string z klasami Tailwinda)
           : "bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white"
       }`}
     >
@@ -95,7 +96,7 @@ export default function LoginPage() {
               </label>
               <div className="relative">
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? "text" : "password"} // zmiana typu inputu po kliknięciu oczka.
                   required
                   className="w-full px-4 py-2 pr-10 rounded-lg bg-white/20 border border-white/30 placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/60"
                   placeholder="••••••••"

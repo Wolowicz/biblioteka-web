@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
 
-export async function GET(
+export async function GET( 
   _req: NextRequest,
-  context: { params: Promise<{ id: string }> } // ⬅ tu też Promise
-) {
+  context: { params: Promise<{ id: string }> } 
+){
   const { id } = await context.params;        // ⬅ await na params
   const numericId = Number(id);
 
@@ -39,7 +39,7 @@ export async function GET(
       [numericId]
     );
 
-    const list = rows as any[];
+    const list = rows as any[];//Typowanie jako any[], bo wynik z bazy to tablica obiektów o nieznanym typie.
     if (list.length === 0) {
       return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
     }
