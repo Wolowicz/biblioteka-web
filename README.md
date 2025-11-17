@@ -43,28 +43,50 @@ Do zarządzania kodem źródłowym wykorzystano system Git oraz repozytorium Git
 * warstwę danych (MySQL).
 
 Struktura projektu:
+biblioteka-web/
 
-app/
-├── api/
-│    └── auth/
-│         ├── login/route.ts
-│         └── register/route.ts
-├── login/page.tsx
-├── register/page.tsx
-├── books/
-│    └── [id]/page.tsx
-├── layout.tsx
-├── page.tsx
-└── globals.css
-
-lib/
-├── db.ts
-└── auth.ts
-
-_components/
-├── BackButton.tsx
-├── ClientFilter.tsx
-└── ReserveButton.tsx
+│
+├── app/                                # główna warstwa aplikacji (App Router)
+│   │
+│   ├── api/                            # warstwa API – obsługa logiki serwerowej
+│   │   └── auth/                       # moduł uwierzytelniania
+│   │       ├── login/
+│   │       │   └── route.ts            # endpoint logowania (POST)
+│   │       └── register/
+│   │           └── route.ts            # endpoint rejestracji (POST)
+│   │
+│   ├── books/                          # moduł katalogu książek
+│   │   └── [id]/                        # dynamiczny routing książek
+│   │       └── page.tsx                # widok szczegółów książki
+│   │
+│   ├── login/                          
+│   │   └── page.tsx                    # widok logowania
+│   │
+│   ├── register/
+│   │   └── page.tsx                    # widok rejestracji
+│   │
+│   ├── layout.tsx                      # wspólny układ strony (layout root)
+│   ├── page.tsx                        # strona główna aplikacji
+│   └── globals.css                     # style globalne projektu
+│
+├── lib/                                # warstwa logiki aplikacji
+│   ├── db.ts                           # konfiguracja połączenia z bazą MySQL
+│   └── auth.ts                         # logika walidacji haseł i ról użytkowników
+│
+├── _components/                         # komponenty wielokrotnego użytku (UI logic)
+│   ├── BackButton.tsx                  # komponent powrotu na poprzednią stronę
+│   ├── ClientFilter.tsx                # komponent filtrów (wersja użytkownika)
+│   └── ReserveButton.tsx               # logika przycisku „Zarezerwuj”
+│
+├── public/                             # zasoby publiczne projektu
+│   ├── favicon.ico                     # ikona przeglądarki
+│   └── icon.png                        # grafika wykorzystywana jako favicon
+│
+├── .env.local                          # konfiguracja środowiskowa (dane dostępu)
+├── .gitignore                          # pliki i katalogi ignorowane przez Git
+├── package.json                        # zależności projektu i skrypty
+├── tsconfig.json                       # konfiguracja TypeScript
+└── README.md                           # dokumentacja projektu
 
 5. Komunikacja z bazą danych
    Aplikacja wykorzystuje plik `.env.local` do konfiguracji połączenia:
