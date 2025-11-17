@@ -12,6 +12,7 @@ type BookDetails = {
   available: boolean;
 };
 
+
 export default async function BookPage(
   props: { params: Promise<{ id: string }> }  // ⬅ tu zmiana
 ) {

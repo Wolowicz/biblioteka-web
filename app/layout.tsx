@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BiblioteQ",
+  title: {
+    default: "BiblioteQ",
+    template: "%s | BiblioteQ",
+  },
   description: "System zarządzania biblioteką Patrycja Wołowicz i Rafał Grabowski",
   icons: {
     icon: "/biblio.png",      // ← to jest nasza favicon
