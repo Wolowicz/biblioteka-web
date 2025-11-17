@@ -1,280 +1,169 @@
-# 📚 Biblioteka Web App (Demo)
+Wprowadzenie
+Projekt „BiblioteQ” stanowi część systemu informatycznego przeznaczonego do zarządzania zasobami bibliotecznymi. Aplikacja została zaprojektowana jako moduł webowy, odpowiedzialny za obsługę interakcji użytkowników z funkcjonalnościami systemu bibliotecznego. Obejmują one logowanie, rejestrację, przeglądanie katalogu książek oraz wyświetlanie szczegółowych informacji bibliograficznych.
 
-Aplikacja webowa będąca częścią projektu **systemu zarządzania biblioteką**.  
-Pozwala przeglądać katalog książek, wyświetlać szczegóły pozycji oraz symulować proces rezerwacji.  
-Projekt zrealizowany w ramach pracy inżynierskiej – **Uniwersytet Kazimierza Wielkiego**.  
-Frontend oparty na **Next.js 16 (App Router)** z użyciem **TypeScript + TailwindCSS**.
+System został wykonany z wykorzystaniem technologii Next.js (React) z integracją z relacyjną bazą danych MySQL, co umożliwia stworzenie rozwiązania modularnego, skalowalnego i przystosowanego do dalszej rozbudowy.
 
----
+Cel i zakres aplikacji
+Aplikacja ma na celu dostarczenie intuicyjnego i nowoczesnego interfejsu webowego umożliwiającego:
 
-## 🧩 Funkcjonalności (wersja demo)
+rejestrację nowych użytkowników,
 
-- 🔍 Przeglądanie listy książek z filtrowaniem po tytule i autorze  
-- 📘 Strona szczegółów książki (tytuł, autor, ISBN, wydawnictwo, rok, dostępność)  
-- 🔙 Przycisk **Powrót** do katalogu  
-- 🪄 Przycisk **„Zarezerwuj (demo)”** z komunikatem potwierdzającym  
-- ⚙️ Mock API (`app/api/books`) — dane z pliku `books.ts`  
-- 🌈 Stylowanie w TailwindCSS  
+logowanie oraz weryfikację poprawności hasła,
 
----
+przypisanie domyślnej roli użytkownika („czytelnik”),
 
-## ⚙️ Technologie
+prezentację katalogu książek,
 
-| Warstwa | Technologia |
-|----------|--------------|
-| Frontend | Next.js 16 (App Router), React 19, TypeScript |
-| Stylowanie | TailwindCSS |
-| Mock API | Next.js Route Handlers |
-| Zarządzanie stanem | React Hooks (useState, useMemo) |
-| Kontrola wersji | Git + GitHub |
-| Środowisko | Node.js 20+ |
+wyświetlanie szczegółów wybranej pozycji,
 
----
+komunikację z bazą danych MySQL poprzez API.
 
-## 🚀 Uruchomienie projektu lokalnie
+Obecna wersja stanowi fundament systemu i jest przygotowana do integracji z modułami przeznaczonymi dla bibliotekarza i administratora.
 
-### 1️⃣ Sklonuj repozytorium
-```bash
-git clone https://github.com/Wolowicz/biblioteka-web.git
-cd biblioteka-web
-```
+Wykorzystane technologie
+Do realizacji projektu wykorzystano:
 
-### 2️⃣ Zainstaluj zależności
-```bash
-npm install
-```
+Next.js 16 – framework oparty na React umożliwiający pracę z App Router,
 
-### 3️⃣ Uruchom w trybie deweloperskim
-```bash
-npm run dev
-```
+React 19 – biblioteka do budowy interfejsów użytkownika,
 
-Aplikacja dostępna będzie pod adresem:  
-👉 http://localhost:3000
+TypeScript,
 
----
+TailwindCSS – mechanizm stylizacji oparty na klasach narzędziowych,
 
-## 📂 Struktura projektu
+MySQL – relacyjna baza danych,
 
-```
+mysql2/promise – warstwa komunikacji z bazą,
+
+bcryptjs – hashowanie haseł,
+
+Node.js 20+.
+
+Do zarządzania kodem źródłowym wykorzystano system Git oraz repozytorium GitHub.
+
+Architektura aplikacji
+Aplikacja została zorganizowana zgodnie z architekturą modularną, obejmującą:
+
+warstwę prezentacji (komponenty Next.js),
+
+warstwę API (Route Handlers),
+
+warstwę logiki biznesowej (moduły w katalogu „lib”),
+
+warstwę danych (MySQL).
+
+Struktura projektu:
+
 app/
- ├── _components/
- │    ├── BackButton.tsx       # przycisk "Powrót"
- │    ├── ClientFilter.tsx     # filtrowanie książek
- │    └── ReserveButton.tsx    # przycisk "Zarezerwuj (demo)"
- │
- ├── _data/
- │    └── books.ts             # przykładowe dane książek
- │
- ├── api/
- │    └── books/
- │         ├── route.ts        # GET /api/books
- │         └── [id]/route.ts   # GET /api/books/[id]
- │
- ├── books/
- │    └── [id]/page.tsx        # strona szczegółów książki
- │
- ├── globals.css
- ├── layout.tsx
- └── page.tsx                  # strona główna katalogu
-```
+├── api/
+│ └── auth/
+│ ├── login/route.ts
+│ └── register/route.ts
+├── login/page.tsx
+├── register/page.tsx
+├── books/
+│ └── [id]/page.tsx
+├── layout.tsx
+├── page.tsx
+└── globals.css
 
----
+lib/
+├── db.ts
+└── auth.ts
 
-## 🧠 Jak to działa
+_components/
+├── BackButton.tsx
+├── ClientFilter.tsx
+└── ReserveButton.tsx
 
-- `/api/books` — zwraca listę książek (mock z pliku `books.ts`)
-- `/api/books/[id]` — zwraca szczegóły jednej książki
-- `/` — wyświetla katalog z wyszukiwarką
-- `/books/[id]` — pokazuje dane książki i przyciski akcji
-- przycisk **Zarezerwuj (demo)** wyświetla komunikat o powodzeniu
+Komunikacja z bazą danych
+Aplikacja wykorzystuje plik .env.local do konfiguracji połączenia:
 
----
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=biblioteka
 
-## 🔒 Bezpieczeństwo repozytorium
+Połączenie realizowane jest przy użyciu mysql2/promise.
+Komunikacja obejmuje m.in.:
 
-Repo nie zawiera:
-```
-node_modules/
-.next/
-.env.local
-.vercel/
-```
+sprawdzanie istnienia użytkownika,
 
-Wszystkie dane konfiguracyjne trzymane są lokalnie (lub w pliku `.env`, który jest ignorowany przez Git).
+zapisywanie nowego użytkownika,
 
----
+pobieranie danych książek,
 
-## 🗃️ Jak podłączyć bazę danych (MySQL + Prisma)
+weryfikację hasła przy logowaniu.
 
-Poniżej instrukcja, jak zastąpić mock API prawdziwą bazą danych MySQL z użyciem ORM Prisma.
+Uwierzytelnianie i bezpieczeństwo
+Mechanizm logowania obejmuje:
 
-### 1️⃣ Instalacja Prisma i zależności
-```bash
-npm i prisma @prisma/client mysql2
-npx prisma init
-```
+odczyt danych z formularza,
 
-To utworzy folder `prisma/` i plik `.env`.
+walidację poprawności,
 
-### 2️⃣ Konfiguracja połączenia z bazą
-W pliku `.env`:
-```
-DATABASE_URL="mysql://USER:PASSWORD@HOST:3306/NAZWA_BAZY?connection_limit=5"
-```
+porównanie hasła podanego z hashem zapisanym w bazie,
 
-W repozytorium dodaj przykładowy plik `.env.example`:
-```
-DATABASE_URL=mysql://USER:PASSWORD@HOST:3306/DBNAME
-```
+zwrócenie danych użytkownika wraz z jego rolą.
 
-### 3️⃣ Modele Prisma (schema.prisma)
-```prisma
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
+Walidacja hasła uwzględnia wymagania:
 
-generator client {
-  provider = "prisma-client-js"
-}
+minimum 8 znaków,
 
-model Ksiazki {
-  KsiazkaId           Int      @id @default(autoincrement())
-  numerISBN           String?  @db.VarChar(20)
-  Tytul               String   @db.VarChar(300)
-  Wydawnictwo         String?  @db.VarChar(200)
-  Rok                 Int?
-  iloscStron          Int?
-  LiczbaEgzemplarzy   Int
-  DostepneEgzemplarze Int
-  autorzy             KsiazkiAutorzy[]
+co najmniej jedna wielka litera,
 
-  @@map("Ksiazki")
-}
+co najmniej jedna mała litera,
 
-model Autorzy {
-  AutorId   Int              @id @default(autoincrement())
-  Imie      String           @db.VarChar(255)
-  Nazwisko  String           @db.VarChar(255)
-  ksiazki   KsiazkiAutorzy[]
+co najmniej jedna cyfra,
 
-  @@map("Autorzy")
-}
+co najmniej jeden znak specjalny.
 
-model KsiazkiAutorzy {
-  KsiazkaId Int
-  AutorId   Int
-  ksiazka   Ksiazki @relation(fields: [KsiazkaId], references: [KsiazkaId])
-  autor     Autorzy @relation(fields: [AutorId], references: [AutorId])
-  @@id([KsiazkaId, AutorId])
-  @@map("KsiazkiAutorzy")
-}
-```
+Rejestracja przypisuje użytkownikowi rolę „CZYTELNIK”.
 
-Jeśli baza już istnieje:
-```bash
-npx prisma db pull
-npx prisma generate
-```
-Jeśli dopiero tworzysz schemat:
-```bash
-npx prisma migrate dev --name init
-```
+Moduł książek
+Moduł katalogu obejmuje:
 
-### 4️⃣ Przykładowe API z Prisma
+pobieranie listy książek,
 
-**`app/api/books/route.ts`**
-```ts
-import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+wyświetlanie szczegółów pozycji,
 
-export async function GET() {
-  const rows = await prisma.ksiazki.findMany({
-    select: {
-      KsiazkaId: true,
-      Tytul: true,
-      DostepneEgzemplarze: true,
-      autorzy: { select: { autor: { select: { Imie: true, Nazwisko: true }}}}
-    },
-    orderBy: { Tytul: "asc" }
-  });
+prezentację informacji bibliograficznych.
 
-  const data = rows.map(r => ({
-    id: r.KsiazkaId,
-    title: r.Tytul,
-    authors: r.autorzy.map(a => `${a.autor.Imie} ${a.autor.Nazwisko}`).join(", "),
-    available: r.DostepneEgzemplarze > 0
-  }));
+Dane pobierane są poprzez endpoint API odpowiedzialny za zapytanie do bazy.
 
-  return NextResponse.json(data);
-}
-```
+Uruchamianie aplikacji
+Instalacja zależności:
 
-**`app/api/books/[id]/route.ts`**
-```ts
-import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+npm install
 
-export async function GET(
-  _req: Request,
-  ctx: { params: Promise<{ id: string }> }
-) {
-  const { id } = await ctx.params;
-  const numericId = Number(id);
-  if (!Number.isFinite(numericId) || numericId <= 0) {
-    return NextResponse.json({ error: "Bad id" }, { status: 400 });
-  }
+Konfiguracja bazy danych poprzez plik .env.local.
 
-  const r = await prisma.ksiazki.findUnique({
-    where: { KsiazkaId: numericId },
-    select: {
-      KsiazkaId: true, Tytul: true, numerISBN: true,
-      Wydawnictwo: true, Rok: true, DostepneEgzemplarze: true,
-      autorzy: { select: { autor: { select: { Imie: true, Nazwisko: true }}}}
-    }
-  });
+Uruchamianie aplikacji:
 
-  if (!r) return NextResponse.json({ error: "Not found" }, { status: 404 });
+npm run dev
 
-  return NextResponse.json({
-    id: r.KsiazkaId,
-    title: r.Tytul,
-    isbn: r.numerISBN,
-    publisher: r.Wydawnictwo,
-    year: r.Rok,
-    authors: r.autorzy.map(a => `${a.autor.Imie} ${a.autor.Nazwisko}`).join(", "),
-    available: r.DostepneEgzemplarze > 0
-  });
-}
-```
+Dostęp przez przeglądarkę:
 
-### 5️⃣ Użycie w Next.js (Server Components)
-W komponentach serwerowych zawsze buduj **pełny URL**:
-```ts
-import { headers } from "next/headers";
-const h = await headers();
-const host = h.get("host")!;
-const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
-const url = `${protocol}://${host}/api/books`;
-```
+http://localhost:3000
 
-### 6️⃣ Na produkcji (np. Vercel)
-W ustawieniach projektu (Settings → Environment Variables) dodaj:
-```
-DATABASE_URL = mysql://USER:PASSWORD@HOST:3306/NAZWA_BAZY
-```
+Możliwości rozbudowy
+Projekt został przygotowany do implementacji kolejnych modułów, takich jak:
 
----
+pełny system wypożyczeń i zwrotów,
 
-## 👩‍💻 Autorzy
-**Patrycja Wołowicz i Rafał Grabowski**  
-Projekt  – Uniwersytet Kazimierza Wielkiego  
-Repozytorium: [github.com/Wolowicz/biblioteka-web](https://github.com/Wolowicz/biblioteka-web)
+panel użytkownika (zarządzanie profilem),
 
----
+panel bibliotekarza (magazyn, egzemplarze),
 
-## 📜 Licencja
-Projekt demonstracyjny – wyłącznie do celów edukacyjnych.
+panel administratora (zarządzanie użytkownikami, logi),
+
+system recenzji z moderacją,
+
+generowanie dokumentów PDF,
+
+historia działań użytkowników,
+
+kosz i przywracanie danych.
+
+Podsumowanie
+BiblioteQ stanowi solidną podstawę systemu bibliotecznego, zapewniając niezbędne funkcjonalności w zakresie zarządzania użytkownikami oraz katalogiem książek. Architektura aplikacji umożliwia stopniową rozbudowę o kolejne moduły oraz integrację z bardziej zaawansowanymi funkcjami systemu bibliotecznego.
