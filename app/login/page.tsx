@@ -58,7 +58,7 @@ export default function LoginPage() {
       className={`min-h-screen flex items-center justify-center px-4 ${
         loggedRole
           ? getRoleTheme(loggedRole) //tło w zależności od roli (Zwraca string z klasami Tailwinda)
-          : "bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white"
+          : "bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500 text-white"
       }`}
     >
       <div className="max-w-md w-full">

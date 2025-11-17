@@ -49,7 +49,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-400 via-emerald-400 to-teal-500 flex items-center justify-center px-4 text-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-sky-400 via-emerald-400 to-teal-500 flex items-center justify-center px-4 text-slate-900">
       <div className="max-w-lg w-full rounded-3xl bg-white/80 backdrop-blur-xl shadow-xl p-8 space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold">Rejestracja</h1>
