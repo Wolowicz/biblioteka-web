@@ -11,4 +11,12 @@ const pool = mysql.createPool({
   connectionLimit: 10,
 });
 
-export default pool; //Dzięki pool mogę wielokrotnie korzystać z tego samego zestawu połączeń do bazy danych. nie tworzysz nowego połączenia za każdym razem, baza działa szybciej i stabilniej.
+export default pool; 
+
+//Zamiast otwierać nowe połączenie z bazą za każdym razem,
+
+//-tworzysz jedno wspólne miejsce, które:
+//-przechowuje kilka otwartych połączeń z MySQL,
+//-pozwala aplikacji szybciej wykonywać zapytania,
+//-daje większą stabilność,
+//-nie obciąża serwera bazodanowego.
