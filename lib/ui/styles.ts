@@ -1,30 +1,37 @@
 // lib/ui/styles.ts
-// Klasy pomocnicze dla UI (login, register, przyciski, welcome, panele)
+// Style używane WYŁĄCZNIE przez: login, register, welcome oraz drobne legacy UI
 
 import { UserRole } from "@/lib/auth-client";
 
-// ============ MOTYWY DLA LOGINU (tylko tu używane) ============
+// =======================
+// 1. MOTYWY DLA EKRANU LOGOWANIA
+// =======================
+
 export const roleThemes: Record<UserRole, string> = {
   ADMIN: "bg-slate-950 text-slate-50",
   LIBRARIAN: "bg-zinc-100 text-zinc-900",
   USER: "bg-white text-slate-900",
 };
 
-// ============ KARTA AUTH (login / register) ============
+// =======================
+// 2. KARTA LOGOWANIA / REJESTRACJI
+// =======================
 
 export const authCard = {
   wrapper: "w-full max-w-md",
-  card:
-    "rounded-3xl p-8 bg-white/10 backdrop-blur-2xl border border-white/25 shadow-2xl",
+  card: "rounded-3xl p-8 bg-white/10 backdrop-blur-2xl border border-white/25 shadow-2xl",
   headerWrapper: "text-center mb-6",
   title: "text-3xl font-bold tracking-tight text-white",
   subtitle: "text-sm text-white/80 mt-1",
-  // tło zanim poznamy rolę (ekran logowania)
+
+  // tło tylko dla "niezalogowanych" ekranów
   unloggedBackground:
     "bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white",
 };
 
-// ============ LOGIN ============
+// =======================
+// 3. LOGIN
+// =======================
 
 export const loginFormStyles = {
   input:
@@ -45,7 +52,9 @@ export const loginFormStyles = {
   loggedRole: "mt-4 text-white/80 text-center text-sm",
 };
 
-// ============ REGISTER (żeby się nie wysypało) ============
+// =======================
+// 4. REGISTER
+// =======================
 
 export const registerFormStyles = {
   wrapper:
@@ -70,54 +79,10 @@ export const registerFormStyles = {
   loginLink: "underline font-semibold text-emerald-700",
 };
 
-// ============ RESZTA STYLI, KTÓRYCH UŻYWASZ GDZIE INDZIEJ ============
+// =======================
+// 5. WELCOME PAGE
+// =======================
 
-// karty w starym katalogu (możesz już nie używać, ale zostawiam, żeby nie psuć)
-export const bookCardStyles = {
-  input: "w-full border p-3 rounded",
-  wrapper: "border rounded p-4 shadow-sm bg-white",
-  title: "font-semibold",
-  authors: "text-sm text-gray-600",
-  badgeAvailable:
-    "text-xs bg-green-100 text-green-700 inline-block px-2 py-1 rounded mt-2",
-  badgeUnavailable:
-    "text-xs bg-red-100 text-red-700 inline-block px-2 py-1 rounded mt-2",
-  link: "mt-3 inline-block underline text-indigo-600",
-  noResults: "text-gray-600",
-};
-
-export const reserveButtonStyles = {
-  base:
-    "mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-500 transition disabled:opacity-50",
-  successMessage:
-    "mt-2 text-green-700 bg-green-100 border border-green-300 rounded px-3 py-2",
-};
-
-export const bookDetailsStyles = {
-  mainWrapper: "p-6 max-w-2xl mx-auto space-y-3",
-  title: "text-2xl font-bold",
-  authors: "text-gray-700",
-  detailsWrapper: "text-sm text-gray-600 space-y-1",
-  statusBadge: "inline-block px-2 py-1 rounded bg-gray-200",
-};
-
-export const backButtonStyles = {
-  base:
-    "mt-6 bg-gray-200 hover:bg-gray-300 text-black px-4 py-2 rounded",
-};
-
-// używane przez BorrowingsPanel / AdminPanel
-export const shellStyles = {
-  panelCard: "bg-white p-4 rounded-xl shadow border border-gray-200",
-  adminPanel: {
-    wrapper:
-      "bg-white p-4 rounded-xl shadow border border-indigo-200 h-full",
-    header: "text-lg font-bold text-indigo-700",
-    content: "text-sm text-gray-600 mt-2",
-  },
-};
-
-// Strona powitalna
 export const welcomePageStyles = {
   wrapper:
     "relative min-h-screen flex items-center justify-center bg-cover bg-center",
@@ -131,4 +96,21 @@ export const welcomePageStyles = {
     "w-full bg-slate-900 text-white rounded-lg py-2.5 font-semibold hover:bg-slate-800 transition-colors",
   registerButton:
     "w-full bg-white/90 text-slate-900 border border-slate-300 rounded-lg py-2.5 font-semibold hover:bg-white transition-colors",
+};
+
+// =======================
+// 6. (Opcjonalnie) Legacy — zostaw tylko jeśli gdzieś używasz
+// =======================
+
+export const bookDetailsStyles = {
+  mainWrapper: "p-6 max-w-2xl mx-auto space-y-3",
+  title: "text-2xl font-bold",
+  authors: "text-gray-700",
+  detailsWrapper: "text-sm text-gray-600 space-y-1",
+  statusBadge: "inline-block px-2 py-1 rounded bg-gray-200",
+};
+
+export const backButtonStyles = {
+  base:
+    "mt-6 bg-gray-200 hover:bg-gray-300 text-black px-4 py-2 rounded",
 };

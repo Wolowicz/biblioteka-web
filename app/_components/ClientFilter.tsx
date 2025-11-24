@@ -16,7 +16,7 @@ export type BookVM = {
 export default function ClientFilter({
   books,
   showReserveButton,
-  role, // ⬅⬅⬅ poprawny props
+  role,   // <<< bardzo ważne!
 }: {
   books: BookVM[];
   showReserveButton: boolean;
@@ -24,7 +24,7 @@ export default function ClientFilter({
 }) {
   const [q, setQ] = useState("");
 
-  // ⬅⬅⬅ KLUCZOWA POPRAWKA
+  // <<< NAJWAŻNIEJSZE – pobieramy motyw pod rolę
   const C = catalogUI[role];
 
   const filtered = useMemo(() => {
@@ -38,7 +38,7 @@ export default function ClientFilter({
 
   return (
     <div className={C.wrapper}>
-      {/* Pasek wyszukiwania */}
+      {/* Wyszukiwarka */}
       <div className={C.searchRow}>
         <input
           value={q}
@@ -48,6 +48,7 @@ export default function ClientFilter({
         />
       </div>
 
+      {/* Lista książek */}
       <div className={C.grid}>
         {filtered.map((b) => (
           <div key={b.id} className={C.card}>
@@ -72,7 +73,7 @@ export default function ClientFilter({
       </div>
 
       {filtered.length === 0 && (
-        <p className="text-gray-600 text-center mt-8">Brak wyników</p>
+        <p className="text-gray-500 text-center mt-8">Brak wyników</p>
       )}
     </div>
   );
