@@ -1,49 +1,79 @@
-// app/_components/ClientFilter.tsx
-"use client";//filtrownie po stronie klienta
+"use client";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { bookCardStyles } from "@/lib/ui/styles"; // Importujemy scentralizowane style
+import { catalogUI } from "@/lib/ui/design";
+import ReserveButton from "./ReserveButton";
+import { UserRole } from "@/lib/auth-client";
 
-export type BookVM = { id: number; title: string; authors: string; available: boolean };
-//Typ TypeScript opisujący widok książki (VM = ViewModel)
+export type BookVM = {
+  id: number;
+  title: string;
+  authors: string;
+  available: boolean;
+};
 
-export default function ClientFilter({ books }: { books: BookVM[] }) {
-  const [q, setQ] = useState(""); //q – aktualna wartość wpisana przez użytkownika w polu wyszukiwania.
-  const filtered = useMemo(() => { //zapamiętuje wynik, aby nie filtrować książek po każdym drobiazgu.
+export default function ClientFilter({
+  books,
+  showReserveButton,
+  role, // ⬅⬅⬅ poprawny props
+}: {
+  books: BookVM[];
+  showReserveButton: boolean;
+  role: UserRole;
+}) {
+  const [q, setQ] = useState("");
+
+  // ⬅⬅⬅ KLUCZOWA POPRAWKA
+  const C = catalogUI[role];
+
+  const filtered = useMemo(() => {
     const s = q.toLowerCase();
     return books.filter(
-      b => b.title.toLowerCase().includes(s) || b.authors.toLowerCase().includes(s)
+      (b) =>
+        b.title.toLowerCase().includes(s) ||
+        b.authors.toLowerCase().includes(s)
     );
-  }, [q, books]);
+  }, [books, q]);
 
   return (
-    <>
-      <input
-        className={bookCardStyles.input} // ⬅️ Użycie stałej
-        placeholder="Szukaj tytułu lub autora…"
-        value={q}
-        onChange={e => setQ(e.target.value)}
-        //każde wpisanie znaku aktualizuje q, a to z kolei uruchamia useMemo i filtruje wyniki
-      />
-      <div className="space-y-3">
-        {filtered.map(b => (
-          //Wyświetlamy listę przefiltrowanych książek.
-          <div key={b.id} className={bookCardStyles.wrapper}> 
-            <div className={bookCardStyles.title}>{b.title}</div> 
-            <div className={bookCardStyles.authors}>{b.authors}</div> 
-            <span className={bookCardStyles.badgeAvailable}> 
+    <div className={C.wrapper}>
+      {/* Pasek wyszukiwania */}
+      <div className={C.searchRow}>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Szukaj po tytule lub autorze..."
+          className={C.searchInput}
+        />
+      </div>
+
+      <div className={C.grid}>
+        {filtered.map((b) => (
+          <div key={b.id} className={C.card}>
+            <h3 className={C.title}>{b.title}</h3>
+            <p className={C.author}>{b.authors}</p>
+
+            <span className={C.badge}>
               {b.available ? "Dostępna" : "Niedostępna"}
             </span>
-            <div>
-              <Link className={bookCardStyles.link} href={`/books/${b.id}`}> 
+
+            <div className={C.footerRow}>
+              <Link href={`/books/${b.id}`} className={C.btnGhost}>
                 Szczegóły
               </Link>
+
+              {showReserveButton && (
+                <ReserveButton bookId={b.id} available={b.available} />
+              )}
             </div>
           </div>
         ))}
-        {filtered.length === 0 && <p className={bookCardStyles.noResults}>Brak wyników</p>} 
       </div>
-    </>
+
+      {filtered.length === 0 && (
+        <p className="text-gray-600 text-center mt-8">Brak wyników</p>
+      )}
+    </div>
   );
 }

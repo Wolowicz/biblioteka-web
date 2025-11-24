@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { registerFormStyles } from "@/lib/ui/styles"; 
+import { validatePassword } from "@/lib/auth-client"; // Działanie tylko w ramach client component, więc OK
 
 export default function RegisterPage() {
   const [form, setForm] = useState({

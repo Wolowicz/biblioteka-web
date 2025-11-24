@@ -1,91 +1,88 @@
 // app/login/page.tsx
 "use client";
 
-import { useState } from "react"; 
-import { useRouter } from "next/navigation"; 
-import { UserRole, setUserSession } from "@/lib/auth"; 
-import { roleThemes, authCard, loginFormStyles } from "@/lib/ui/styles"; 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { UserRole, setUserSession } from "@/lib/auth-client";
+import { roleThemes, authCard, loginFormStyles } from "@/lib/ui/styles";
 
 export default function LoginPage() {
-  const router = useRouter(); 
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // czy hasło ma być widoczne (oczko)
+  const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loggedRole, setLoggedRole] = useState<UserRole | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
-  e.preventDefault();
-  setError(null);
-  setLoading(true);
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-  //Wysyłam zapytanie POST na mój endpoint logowania.
-  try {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error || "Błąd logowania");
-      return;
-    }
+      if (!res.ok) {
+        setError(data.error || "Błąd logowania");
+        return;
+      }
 
-    setLoggedRole(data.role as UserRole);
+      const role = data.role as UserRole;
+      setLoggedRole(role);
 
-    setUserSession({
-        id: data.id,
+      setUserSession({
+        id: String(data.id),
         email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
-        role: data.role as UserRole,
-    });
-    
-    // TU: przekierowanie po udanym logowaniu
-    router.push("/");   // Przekierowujemy na nowo wyglądającą stronę główną
+        role,
+      });
 
-  } catch (err) {
-    console.error(err);
-    setError("Problem z połączeniem z serwerem");
-  } finally {
-    setLoading(false);
+      router.push("/");
+    } catch (err) {
+      console.error(err);
+      setError("Problem z połączeniem z serwerem");
+    } finally {
+      setLoading(false);
+    }
   }
-}
-
 
   function goToRegister() {
     window.location.href = "/register";
   }
 
-  const backgroundClass = loggedRole 
-    ? roleThemes[loggedRole] 
-    : authCard.unloggedBackground; 
+  // tło: przed logiem – gradient, po logowaniu na chwilę kolor wg roli
+  const backgroundClass = loggedRole
+    ? roleThemes[loggedRole]
+    : authCard.unloggedBackground;
 
   return (
     <div
       className={`min-h-screen flex items-center justify-center px-4 ${backgroundClass}`}
     >
-      <div className={authCard.wrapper}> 
-        <div className={authCard.card}> 
-          {/* nagłówek bez ikonki */}
+      <div className={authCard.wrapper}>
+        <div className={authCard.card}>
+          {/* nagłówek */}
           <div className={authCard.headerWrapper}>
-            <h1 className={authCard.title}>
-              BiblioteQ
-            </h1>
+            <h1 className={authCard.title}>BiblioteQ</h1>
             <p className={authCard.subtitle}>
-              Twoja biblioteka w jednym miejscu
+              System zarządzania biblioteką
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* email */}
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-white">
                 Email
               </label>
               <input
@@ -100,26 +97,28 @@ export default function LoginPage() {
 
             {/* hasło + oczko */}
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-white">
                 Hasło
               </label>
               <div className={loginFormStyles.passwordWrapper}>
                 <input
-                  type={showPassword ? "text" : "password"} // zmiana typu inputu po kliknięciu oczka.
+                  type={showPassword ? "text" : "password"}
                   required
                   className={`${loginFormStyles.input} ${loginFormStyles.passwordInputPadding}`}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                {/* przycisk „oczko” po prawej */}
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
                   className={loginFormStyles.passwordToggle}
                 >
-                  {/* ⬅️ ZMIANA: Używamy ikon Font Awesome */}
-                  <i className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}></i>
+                  <i
+                    className={
+                      showPassword ? "fas fa-eye-slash" : "fas fa-eye"
+                    }
+                  />
                 </button>
               </div>
               <p className={loginFormStyles.helperText}>
@@ -127,11 +126,7 @@ export default function LoginPage() {
               </p>
             </div>
 
-            {error && (
-              <p className={loginFormStyles.error}>
-                {error}
-              </p>
-            )}
+            {error && <p className={loginFormStyles.error}>{error}</p>}
 
             <button
               type="submit"

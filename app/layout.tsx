@@ -1,20 +1,22 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import "./globals.css"; 
+import "./globals.css";
+import { roleUI } from "@/lib/ui/design";
 
-// ⬅️ ZASOBY CSS DLA IKON - WAŻNE!
-const fontAwesomeLink = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"; 
+// ZASOBY CSS DLA IKON - WAŻNE!
+const fontAwesomeLink =
+  "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css";
 
 export const metadata: Metadata = {
   title: {
     default: "BiblioteQ",
     template: "%s | BiblioteQ",
   },
-  description: "System zarządzania biblioteką Patrycja Wołowicz i Rafał Grabowski",
+  description:
+    "System zarządzania biblioteką Patrycja Wołowicz i Rafał Grabowski",
   icons: {
-    icon: "/biblio.png",      // ← to jest nasza favicon
+    icon: "/biblio.png",      // favicon
     shortcut: "/biblio.png",
-    apple: "/biblio.png",
   },
 };
 
@@ -26,10 +28,14 @@ export default function RootLayout({
   return (
     <html lang="pl">
       <head>
-        {/* ⬅️ DODAJ TO: Ładowanie biblioteki Font Awesome */}
+        {/* Ładowanie biblioteki Font Awesome */}
         <link rel="stylesheet" href={fontAwesomeLink} />
       </head>
-      <body>{children}</body>
+
+      {/* TUTAJ PODPINAMY JASNY MOTYW DLA CAŁEGO BODY */}
+      <body className="bg-white text-slate-900 min-h-screen">
+        {children}
+      </body>
     </html>
   );
 }

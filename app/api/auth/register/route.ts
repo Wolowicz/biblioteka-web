@@ -2,7 +2,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs"; // biblioteka do hashowania haseł (hashowanie hasła algorytmem blowfish)
 import pool from "@/lib/db"; // połączenie do bazy danych
-import { validatePassword } from "@/lib/auth"; // funkcja do walidacji hasła z lib/auth.ts
+// app/api/auth/register/route.ts
+// ...
+import { validatePassword } from "@/lib/auth-client"; // ⬅️ ZMIANA: Importujemy walidację z modułu klienckiego (jest synchroniczna i bez cookies, więc działa)
+// ...
+// ⬅️ ZMIANA: Importujemy typy z modułu klienckiego
+import type { UserRole } from "@/lib/auth-client"; 
+// ...
 
 export async function POST(req: NextRequest) {
   try {
