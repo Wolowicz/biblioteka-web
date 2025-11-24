@@ -1,55 +1,105 @@
+// app/_components/ReserveButton.tsx
 "use client";
 
-import { useState } from "react";//Importujemy hook useState.Hook pozwala stworzyć zmienne „żyjące” wewnątrz komponentu — tutaj będzie to stan przycisku (np. idle, loading, success).
+import { useState } from "react";
+import { reserveButtonStyles } from "@/lib/ui/styles";
+// ⬅️ NOWOŚĆ: Importujemy hook autoryzacyjny do pobrania ID użytkownika
+import { useAuth } from "@/lib/hooks"; 
 
 export default function ReserveButton({
   bookId,
   available,
 }: {
-  bookId: number; //identyfikator książki
+  bookId: number; // identyfikator książki
   available: boolean;
 }) {
+  const { user, isAuthenticated, isLoading } = useAuth(); // ⬅️ Pobieramy dane sesji
+
   const [status, setStatus] =
     useState<"idle" | "loading" | "success" | "error">("idle");
-
+    
+  // ⬅️ ZMIENIONA FUNKCJA DO OBSŁUGI RZECZYWISTEJ REZERWACJI
   const handleClick = async () => {
-    if (!available || status === "loading") return;
+    if (!isAuthenticated || !user || !available || status === "loading") return;
+    
     setStatus("loading");
 
-    // póki co DEMO: udajemy żądanie do API, fakowe obietnica do połączenia z bazą (to do wysłanie fetch POST do /api/reservations)
-    await new Promise((r) => setTimeout(r, 700));
+    try {
+      // Wysłanie rzeczywistego żądania POST do API
+      const res = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          bookId: bookId, 
+          userId: user.id // ⬅️ Przekazujemy ID zalogowanego użytkownika
+        }),
+      });
 
-    setStatus("success");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Błąd rezerwacji");
+      }
+      
+      // Sukces: symulujemy lekkie opóźnienie, aby pokazać stan "success"
+      await new Promise((r) => setTimeout(r, 500)); 
+      setStatus("success");
+      
+      // Opcjonalnie: odśwież stronę, aby zaktualizować stan dostępności książki
+      // window.location.reload(); 
+
+    } catch (err) {
+      console.error("Reservation failed:", err);
+      setStatus("error");
+      // Można ustawić error message z powrotem na idle po chwili, aby umożliwić ponowną próbę
+      setTimeout(() => setStatus("idle"), 3000); 
+    }
   };
 
-  const disabled = !available || status === "loading" || status === "success";
-//Przycisk jest zablokowany, gdy:książka jest niedostępna
+  // ⬅️ Aktualizacja logiki blokowania przycisku
+  const isBlocked = !available || status === "loading" || status === "success" || isLoading;
+  const isNotLoggedIn = !isAuthenticated || isLoading;
+
+  let buttonText = "Zarezerwuj";
+  let buttonTitle = available ? "Tworzy rezerwację/wypożyczenie" : "Brak dostępnych egzemplarzy";
+
+  if (isLoading) {
+      buttonText = "Ładowanie...";
+      buttonTitle = "Trwa weryfikacja sesji.";
+  } else if (isNotLoggedIn) {
+      buttonText = "Zaloguj się, aby rezerwować";
+      buttonTitle = "Musisz być zalogowany, aby rezerwować.";
+  } else if (status === "loading") {
+      buttonText = "Rezerwuję...";
+  } else if (status === "success") {
+      buttonText = "Zarezerwowano!";
+      buttonTitle = "Pomyślnie zarezerwowano książkę.";
+  } else if (!available) {
+      buttonText = "Niedostępna";
+      buttonTitle = "Brak dostępnych egzemplarzy.";
+  }
+
 
   return (
     <div>
       <button
         onClick={handleClick}
-        disabled={disabled}
-        className="mt-4 bg-black text-white px-4 py-2 rounded disabled:opacity-50"
-        title={
-          available
-            ? "Demo: tu byłaby rezerwacja"
-            : "Brak dostępnych egzemplarzy"
-        }
+        disabled={isBlocked || isNotLoggedIn}
+        className={reserveButtonStyles.base}
+        title={buttonTitle}
       >
-        {status === "loading"
-          ? "Rezerwuję…"
-          : status === "success"
-          ? "Zarezerwowano"
-          : available
-          ? "Zarezerwuj (demo)"
-          : "Niedostępna"}
+        {buttonText}
       </button>
 
       {status === "success" && (
-        <p className="mt-2 text-green-700 bg-green-100 border border-green-300 rounded px-3 py-2">
-          Zarezerwowano (demo)
+        <p className={reserveButtonStyles.successMessage}>
+          Zarezerwowano pomyślnie! Status zaktualizowany w bazie.
         </p>
+      )}
+      
+      {status === "error" && (
+          <p className="mt-2 text-red-700 bg-red-100 border border-red-300 rounded px-3 py-2 text-sm">
+              Błąd rezerwacji. Spróbuj ponownie.
+          </p>
       )}
     </div>
   );

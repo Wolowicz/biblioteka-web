@@ -1,6 +1,8 @@
+// app/_components/BackButton.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
+import { backButtonStyles } from "@/lib/ui/styles"; // ⬅️ NOWY IMPORT
 
 export default function BackButton() {
   const router = useRouter();
@@ -19,7 +21,7 @@ export default function BackButton() {
   return (
     <button
       onClick={handleClick}
-      className="mt-6 bg-gray-200 hover:bg-gray-300 text-black px-4 py-2 rounded"
+      className={backButtonStyles.base} 
     >
       ← Powrót
     </button>

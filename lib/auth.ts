@@ -2,19 +2,45 @@
 // Typy ról w systemie - trzy poziomy uprawnień
 export type UserRole = "USER" | "LIBRARIAN" | "ADMIN";
 
-export function getRoleTheme(role: UserRole) {
-  // zwracamy klasy Tailwind dla body / tła w zależności od roli
-  switch (role) {
-    case "ADMIN":
-      // ciemny motyw
-      return "bg-gradient-to-br from-slate-900 via-slate-950 to-slate-800 text-slate-100";
-    case "LIBRARIAN":
-      // szare, neutralne tło
-      return "bg-gradient-to-br from-zinc-200 via-zinc-300 to-zinc-100 text-zinc-900";
-    case "USER":
-    default:
-      // jasny, młodzieżowy
-      return "bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 text-slate-900";
+// ⬅️ NOWOŚĆ: Typ danych, które będziemy przechowywać po zalogowaniu
+export type UserSession = {
+  id: number;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: UserRole;
+};
+
+// ⬅️ NOWOŚĆ: Nazwa, pod którą zapiszemy dane w pamięci przeglądarki
+const STORAGE_KEY = "biblioteq_user_session";
+
+// ⬅️ NOWOŚĆ: Funkcja do zapisywania danych zalogowanego użytkownika
+export function setUserSession(user: UserSession) {
+  // Sprawdzamy, czy jesteśmy w przeglądarce (po stronie klienta)
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  }
+}
+
+// ⬅️ NOWOŚĆ: Funkcja do odczytywania danych zalogowanego użytkownika
+export function getUserSession(): UserSession | null {
+  if (typeof window !== "undefined") {
+    const session = localStorage.getItem(STORAGE_KEY);
+    try {
+      // Jeśli dane istnieją, próbujemy je odczytać
+      return session ? (JSON.parse(session) as UserSession) : null;
+    } catch (e) {
+      console.error("Failed to parse user session from localStorage:", e);
+      return null;
+    }
+  }
+  return null;
+}
+
+// ⬅️ NOWOŚĆ: Funkcja do "wylogowania" (usuwania danych z przeglądarki)
+export function clearUserSession() {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(STORAGE_KEY);
   }
 }
 

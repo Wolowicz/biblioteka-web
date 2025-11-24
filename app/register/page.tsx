@@ -1,6 +1,8 @@
+// app/register/page.tsx
 "use client";
 
 import { useState } from "react";
+import { registerFormStyles } from "@/lib/ui/styles"; 
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -10,7 +12,8 @@ export default function RegisterPage() {
     password: "",
   });
 
-  //Trzymam wszystkie pola formularza w jednym obiekcie form.
+  const [showPassword, setShowPassword] = useState(false);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -39,21 +42,21 @@ export default function RegisterPage() {
         return;
       }
 
-      setSuccess("Konto utworzone. Możesz się zalogować.");
+      setSuccess("Konto utworzone. Możesz przejść do logowania.");
       setForm({ firstName: "", lastName: "", email: "", password: "" });
     } catch (err) {
-      setError("Problem z połączeniem"); // W catch – komunikat o problemie z siecią.
+      setError("Problem z połączeniem"); 
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-sky-400 via-emerald-400 to-teal-500 flex items-center justify-center px-4 text-slate-900">
-      <div className="max-w-lg w-full rounded-3xl bg-white/80 backdrop-blur-xl shadow-xl p-8 space-y-6">
+    <div className={registerFormStyles.wrapper}>
+      <div className={registerFormStyles.card}>
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Rejestracja</h1>
-          <p className="text-sm text-slate-600 mt-1">
+          <h1 className={registerFormStyles.headerTitle}>Rejestracja</h1>
+          <p className={registerFormStyles.headerSubtitle}>
             Utwórz konto użytkownika BiblioteQ
           </p>
         </div>
@@ -63,7 +66,7 @@ export default function RegisterPage() {
             <div>
               <label className="block text-sm font-medium mb-1">Imię</label>
               <input
-                className="w-full border rounded-lg px-3 py-2"
+                className={registerFormStyles.input}
                 value={form.firstName}
                 onChange={(e) => updateField("firstName", e.target.value)}
                 required
@@ -73,7 +76,7 @@ export default function RegisterPage() {
             <div>
               <label className="block text-sm font-medium mb-1">Nazwisko</label>
               <input
-                className="w-full border rounded-lg px-3 py-2"
+                className={registerFormStyles.input}
                 value={form.lastName}
                 onChange={(e) => updateField("lastName", e.target.value)}
                 required
@@ -85,7 +88,7 @@ export default function RegisterPage() {
             <label className="block text-sm font-medium mb-1">Email</label>
             <input
               type="email"
-              className="w-full border rounded-lg px-3 py-2"
+              className={registerFormStyles.input}
               value={form.email}
               onChange={(e) => updateField("email", e.target.value)}
               required
@@ -94,34 +97,51 @@ export default function RegisterPage() {
 
           <div>
             <label className="block text-sm font-medium mb-1">Hasło</label>
-            <input
-              type="password"
-              className="w-full border rounded-lg px-3 py-2"
-              value={form.password}
-              onChange={(e) => updateField("password", e.target.value)}
-              required
-            />
-            <p className="mt-1 text-xs text-slate-500">
+            <div className={registerFormStyles.passwordWrapper}>
+              <input
+                type={showPassword ? "text" : "password"} 
+                className={`${registerFormStyles.input} ${registerFormStyles.passwordInputPadding}`} 
+                value={form.password}
+                onChange={(e) => updateField("password", e.target.value)}
+                required
+              />
+              {/* Przycisk "oczko" */}
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className={registerFormStyles.passwordToggle}
+              >
+                {/* ⬅️ ZMIANA: Używamy ikon Font Awesome */}
+                <i className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}></i>
+              </button>
+            </div>
+            <p className={registerFormStyles.helperText}>
               Min. 8 znaków, wielka i mała litera, cyfra i znak specjalny.
             </p>
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <p className={registerFormStyles.error}>
               {error}
             </p>
           )}
 
           {success && (
-            <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+            <p className={registerFormStyles.success}>
               {success}
+              <button
+                onClick={() => (window.location.href = "/login")}
+                className="underline font-semibold ml-2"
+              >
+                Zaloguj się
+              </button>
             </p>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2.5 rounded-lg transition"
+            className={registerFormStyles.button}
           >
             {loading ? "Rejestrowanie..." : "Zarejestruj się"}
           </button>
@@ -131,7 +151,7 @@ export default function RegisterPage() {
           Masz już konto?{" "}
           <button
             onClick={() => (window.location.href = "/login")}
-            className="underline font-semibold text-emerald-700"
+            className={registerFormStyles.loginLink}
           >
             Zaloguj się
           </button>

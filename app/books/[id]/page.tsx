@@ -1,6 +1,8 @@
+// app/books/[id]/page.tsx
 import { headers } from "next/headers"; //importuję funkcję headers – pozwala odczytać nagłówki żądania HTTP po stronie serwera (np. host).
 import BackButton from "../../_components/BackButton";
 import ReserveButton from "../../_components/ReserveButton";
+import { bookDetailsStyles } from "@/lib/ui/styles"; // ⬅️ NOWY IMPORT
 
 //Tworzę typ (interfejs) opisujący dane jednej książki, jakie dostaję z API.
 //? oznacza, że pole jest opcjonalne.
@@ -41,17 +43,17 @@ export default async function BookPage(
   const b: BookDetails = await res.json();
 
   return (
-    <main className="p-6 max-w-2xl mx-auto space-y-3">
-      <h1 className="text-2xl font-bold">{b.title}</h1>
-      <p className="text-gray-700">{b.authors}</p>
+    <main className={bookDetailsStyles.mainWrapper}> 
+      <h1 className={bookDetailsStyles.title}>{b.title}</h1> 
+      <p className={bookDetailsStyles.authors}>{b.authors}</p> 
 
-      <div className="text-sm text-gray-600 space-y-1">
+      <div className={bookDetailsStyles.detailsWrapper}> 
         {b.isbn && <p>ISBN: {b.isbn}</p>}
         {b.publisher && <p>Wydawnictwo: {b.publisher}</p>}
         {b.year && <p>Rok wydania: {b.year}</p>}
         <p>
           Status:{" "}
-          <span className="inline-block px-2 py-1 rounded bg-gray-200">
+          <span className={bookDetailsStyles.statusBadge}> 
             {b.available ? "Dostępna" : "Niedostępna"}
           </span>
         </p>
