@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { UserRole } from "@/lib/auth/index";
+import ReserveButton from "./ReserveButton";
 
 export type BookVM = {
   id: number;
@@ -137,19 +138,16 @@ export default function ClientFilter({
             <div
               className="
                 w-full h-56 rounded-xl overflow-hidden
-                bg-gradient-to-br from-gray-100 to-gray-200
+                bg-linear-to-br from-gray-100 to-gray-200
                 flex items-center justify-center text-gray-400 text-sm
               "
             >
-              {b.coverUrl ? (
-                <img
-                  src={b.coverUrl}
-                  alt={b.title}
-                  className="object-cover w-full h-full transition-transform group-hover:scale-105"
-                />
-              ) : (
-                "Brak okładki"
-              )}
+              <img
+  src={b.coverUrl || "/biblio.png"}
+  alt={b.title}
+  className="object-cover w-full h-full transition-transform group-hover:scale-105"
+/>
+
             </div>
 
             {/* TYTUŁ + AUTOR */}
@@ -186,17 +184,12 @@ export default function ClientFilter({
   <div className="flex items-center gap-2">
 
     {/* USER */}
-    {role === "USER" && (
-      <button
-        disabled={!b.available}
-        className={`
-          px-3 py-1.5 rounded-lg text-xs font-semibold transition
-          ${b.available ? "bg-indigo-600 hover:bg-indigo-500 text-white" : "bg-gray-300 text-gray-600"}
-        `}
-      >
-        {b.available ? "Rezerwuj" : "Niedostępna"}
-      </button>
-    )}
+
+
+{role === "USER" && (
+  <ReserveButton bookId={b.id} available={b.available} />
+)}
+
 
     {/* LIBRARIAN */}
     {role === "LIBRARIAN" && (

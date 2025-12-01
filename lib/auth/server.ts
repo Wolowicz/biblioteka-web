@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { mapRoleFromDb } from "@/lib/auth/role-map";
 import { UserSession } from "@/lib/auth"; 
+import { NextResponse } from "next/server";
 
 
 export async function getUserSessionSSR(): Promise<UserSession | null> {

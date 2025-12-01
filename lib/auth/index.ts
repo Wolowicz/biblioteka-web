@@ -73,3 +73,15 @@ export async function authLogout() {
     credentials: "include",
   });
 }
+
+// lib/auth/validate.ts
+
+export function validatePassword(password: string): string | null {
+  if (password.length < 8) return "Hasło musi mieć co najmniej 8 znaków";
+  if (!/[A-Z]/.test(password)) return "Hasło musi zawierać dużą literę";
+  if (!/[a-z]/.test(password)) return "Hasło musi zawierać małą literę";
+  if (!/[0-9]/.test(password)) return "Hasło musi zawierać cyfrę";
+  if (!/[!@#$%^&*]/.test(password)) return "Hasło musi zawierać znak specjalny";
+
+  return null;
+}
