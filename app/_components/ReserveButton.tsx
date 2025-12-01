@@ -18,35 +18,39 @@ export default function ReserveButton({
     "idle" | "loading" | "success" | "error"
   >("idle");
 
-  const handleClick = async () => {
-    if (!isAuthenticated || !user || !available || status === "loading") return;
+const handleClick = async () => {
+  if (!isAuthenticated || !user || !available || status === "loading") return;
 
-    setStatus("loading");
+  setStatus("loading");
 
-    try {
-      const res = await fetch("/api/reservations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bookId: bookId,
-          userId: user.id,
-        }),
-      });
+  try {
+    const res = await fetch("/api/reservations", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookId }),
+    });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Błąd rezerwacji");
+    if (!res.ok) {
+      const errorData = await res.json();
+
+      if (res.status === 401) {
+        // np. przekierowanie do logowania
+        alert("Musisz być zalogowana, żeby rezerwować.");
       }
 
-      await new Promise((r) => setTimeout(r, 500));
-
-      setStatus("success");
-    } catch (err) {
-      console.error("Reservation failed:", err);
-      setStatus("error");
-      setTimeout(() => setStatus("idle"), 3000);
+      throw new Error(errorData.error || "Błąd rezerwacji");
     }
-  };
+
+    await new Promise((r) => setTimeout(r, 500));
+    setStatus("success");
+  } catch (err) {
+    console.error("Reservation failed:", err);
+    setStatus("error");
+    setTimeout(() => setStatus("idle"), 3000);
+  }
+};
+
 
   const isBlocked =
     !available || status === "loading" || status === "success" || isLoading;

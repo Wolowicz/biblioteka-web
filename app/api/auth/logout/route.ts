@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export async function POST() {
-  const res = NextResponse.json({ message: "Wylogowano" });
+  const cookieStore = await cookies();
 
-  // Usuwamy cookie userSession
-  res.cookies.set("userSession", "", {
+  cookieStore.set("userSession", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",   
     maxAge: 0,
-    path: "/",
   });
 
-  return res;
+  return NextResponse.json({ ok: true });
 }

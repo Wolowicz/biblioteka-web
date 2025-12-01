@@ -53,3 +53,10 @@ export function validatePassword(password: string): string | null {
   }
   return null; 
 }
+
+export function validateUserRole(role: any): UserRole {
+  if (role === "ADMIN" || role === "LIBRARIAN" || role === "USER") {
+    return role;
+  }
+  return "USER"; 
+}

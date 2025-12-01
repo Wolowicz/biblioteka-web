@@ -16,7 +16,7 @@ export type BookVM = {
 export default function ClientFilter({
   books,
   showReserveButton,
-  role,   // <<< bardzo ważne!
+  role,
 }: {
   books: BookVM[];
   showReserveButton: boolean;
@@ -24,8 +24,20 @@ export default function ClientFilter({
 }) {
   const [q, setQ] = useState("");
 
-  // <<< NAJWAŻNIEJSZE – pobieramy motyw pod rolę
-  const C = catalogUI[role];
+  // ---------------------------------------------
+  // 1. Bezpieczny wybór roli (jak w AppShell)
+  // ---------------------------------------------
+  const availableRoles: UserRole[] = ["USER", "ADMIN", "LIBRARIAN"];
+
+  const roleKey: UserRole =
+    availableRoles.includes(role as UserRole)
+      ? (role as UserRole)
+      : "USER";
+
+  // ---------------------------------------------
+  // 2. Motywy UI — ZAWSZE poprawne
+  // ---------------------------------------------
+  const C = catalogUI[roleKey];
 
   const filtered = useMemo(() => {
     const s = q.toLowerCase();

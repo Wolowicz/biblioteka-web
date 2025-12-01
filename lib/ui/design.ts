@@ -240,3 +240,15 @@ export const reserveUI = {
   error:
     "mt-2 text-red-700 bg-red-100 border border-red-300 rounded px-3 py-2 text-sm",
 };
+
+// ============ BACK BUTTON ============
+export const backUI = {
+  base:
+    "mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition " +
+    "bg-gray-200 hover:bg-gray-300 text-gray-800 border border-gray-300",
+  
+  baseDark:
+    "mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition " +
+    "bg-white/10 hover:bg-white/20 text-white border border-white/20",
+};
+

@@ -2,27 +2,27 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { backButtonStyles } from "@/lib/ui/styles"; // ⬅️ NOWY IMPORT
+import { backUI } from "@/lib/ui/design";
+import { useAuth } from "@/lib/hooks";   // żeby pobrać rolę użytkownika
 
 export default function BackButton() {
   const router = useRouter();
+  const { user } = useAuth();
 
   const handleClick = () => {
-    // jeśli nie ma historii (wejście z linka), przejdź do katalogu
     if (typeof window !== "undefined" && window.history.length <= 1) {
       router.push("/");
     } else {
       router.back();
     }
   };
-//„Jeśli użytkownik wszedł na stronę z listy książek – wróć do listy.
-//Jeśli wszedł bezpośrednio z linka i nie ma historii – przenieś go na /.”
+
+  // wybór stylu zależnie od roli
+  const cls =
+    user?.role === "ADMIN" ? backUI.baseDark : backUI.base;
 
   return (
-    <button
-      onClick={handleClick}
-      className={backButtonStyles.base} 
-    >
+    <button onClick={handleClick} className={cls}>
       ← Powrót
     </button>
   );

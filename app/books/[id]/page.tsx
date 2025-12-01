@@ -1,66 +1,86 @@
 // app/books/[id]/page.tsx
-import { headers } from "next/headers"; //importuję funkcję headers – pozwala odczytać nagłówki żądania HTTP po stronie serwera (np. host).
 import BackButton from "../../_components/BackButton";
 import ReserveButton from "../../_components/ReserveButton";
-import { bookDetailsStyles } from "@/lib/ui/styles"; // ⬅️ NOWY IMPORT
+import { roleUI, panelUI } from "@/lib/ui/design";
+import { getUserSessionSSR } from "@/lib/auth-server";
+import { headers } from "next/headers";
 
-//Tworzę typ (interfejs) opisujący dane jednej książki, jakie dostaję z API.
-//? oznacza, że pole jest opcjonalne.
-// | null – może być null, jeśli w bazie pole jest puste.
-
-type BookDetails = {
-  id: number;
-  title: string;
-  authors: string;
-  isbn?: string | null;
-  publisher?: string | null;
-  year?: number | null;
-  available: boolean;
-};
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;   // ⬅️ ważne
+  const bookId = Number(id);
 
 
-export default async function BookPage(
-  props: { params: Promise<{ id: string }> } //W tym miejscu params są zwracane jako obiekt typu Promise. Oznacza to, że wartości parametrów URL nie są dostępne natychmiast — są przygotowywane asynchronicznie przez Next.js. Aby je wykorzystać, muszę je najpierw „odpakować”, czyli użyć await props.params. Po odczekaniu otrzymuję zwykły obiekt { id: string }.
-) {
-  const { id } = await props.params;          // ⬅ await na params
-  const numericId = Number(id); //Wyciągam id z URL (/books/3 → id = "3"). Konwertuję je na liczbę.
+  // Pobieramy usera (SSR)
+  const user = await getUserSessionSSR();
 
-  if (!Number.isFinite(numericId) || numericId <= 0) {
-    return <main className="p-6">Nieprawidłowy adres (brak ID).</main>;
-  }
+  // Pobieramy książkę z API
+  const h = await headers();
+  const host = h.get("host")!;
+  const protocol =
+    process.env.NODE_ENV === "development" ? "http" : "https";
 
-  const h = await headers();                  // ⬅ headers też jest Promise
-  const host = h.get("host") ?? "localhost";
-  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
-  const url = `${protocol}://${host}/api/books/${numericId}`; //Składam pełny URL do API pojedynczej książki 
-
-  const res = await fetch(url, { cache: "no-store" }); //cache: "no-store" – zawsze pobieraj świeże dane, nic nie cache’uj.
+  const res = await fetch(`${protocol}://${host}/api/books/${bookId}`, {
+    cache: "no-store",
+  });
 
   if (!res.ok) {
-    return <main className="p-6">Nie znaleziono książki.</main>;
-  }
-
-  const b: BookDetails = await res.json();
-
-  return (
-    <main className={bookDetailsStyles.mainWrapper}> 
-      <h1 className={bookDetailsStyles.title}>{b.title}</h1> 
-      <p className={bookDetailsStyles.authors}>{b.authors}</p> 
-
-      <div className={bookDetailsStyles.detailsWrapper}> 
-        {b.isbn && <p>ISBN: {b.isbn}</p>}
-        {b.publisher && <p>Wydawnictwo: {b.publisher}</p>}
-        {b.year && <p>Rok wydania: {b.year}</p>}
-        <p>
-          Status:{" "}
-          <span className={bookDetailsStyles.statusBadge}> 
-            {b.available ? "Dostępna" : "Niedostępna"}
-          </span>
+    return (
+      <div className="p-6">
+        <BackButton />
+        <p className="mt-6 text-red-600 text-lg font-semibold">
+          Nie znaleziono książki.
         </p>
       </div>
+    );
+  }
 
-      <ReserveButton bookId={numericId} available={b.available} />
+  const book = await res.json();
+
+  const role = user?.role ?? "USER";
+  const P = panelUI[role];
+
+  return (
+    <div className={roleUI[role].background + " p-6"}>
       <BackButton />
-    </main>
+
+      <div className="max-w-3xl mx-auto mt-8 space-y-6">
+
+        {/* KARTA KSIĄŻKI – nowy design */}
+        <div className={P.card}>
+          <h1 className={P.header}>{book.title}</h1>
+
+          <p className={P.subheader}>Autor: {book.authors}</p>
+
+          <div className="mt-4 space-y-2">
+            <p className={P.label}>
+              Status:{" "}
+              <span className={P.value}>
+                {book.available ? "Dostępna" : "Niedostępna"}
+              </span>
+            </p>
+
+            <p className={P.label}>
+              ISBN: <span className={P.value}>{book.isbn}</span>
+            </p>
+
+            <p className={P.label}>
+              Rok wydania: <span className={P.value}>{book.year}</span>
+            </p>
+          </div>
+
+          {/* Przycisk rezerwacji */}
+          <div className="mt-6">
+            <ReserveButton
+              bookId={book.id}
+              available={book.available}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
