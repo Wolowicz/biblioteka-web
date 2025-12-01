@@ -1,9 +1,8 @@
-// app/_components/ReserveButton.tsx
 "use client";
 
 import { useState } from "react";
-import { reserveUI } from "@/lib/ui/design";   // ✅ NOWY DESIGN SYSTEM
-import { useAuth } from "@/lib/hooks";         // pobieramy usera
+import { useAuth } from "@/lib/auth/index";
+import { reserveUI } from "@/lib/ui/theme";
 
 export default function ReserveButton({
   bookId,
@@ -18,39 +17,37 @@ export default function ReserveButton({
     "idle" | "loading" | "success" | "error"
   >("idle");
 
-const handleClick = async () => {
-  if (!isAuthenticated || !user || !available || status === "loading") return;
+  const handleClick = async () => {
+    if (!isAuthenticated || !user || !available || status === "loading")
+      return;
 
-  setStatus("loading");
+    setStatus("loading");
 
-  try {
-    const res = await fetch("/api/reservations", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookId }),
-    });
+    try {
+      const res = await fetch("/api/reservations", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookId }),
+      });
 
-    if (!res.ok) {
-      const errorData = await res.json();
+      if (!res.ok) {
+        const errorData = await res.json();
 
-      if (res.status === 401) {
-        // np. przekierowanie do logowania
-        alert("Musisz być zalogowana, żeby rezerwować.");
+        if (res.status === 401) {
+          alert("Musisz być zalogowana, aby rezerwować.");
+        }
+
+        throw new Error(errorData.error || "Błąd rezerwacji");
       }
 
-      throw new Error(errorData.error || "Błąd rezerwacji");
+      await new Promise((r) => setTimeout(r, 500));
+      setStatus("success");
+    } catch (_) {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
     }
-
-    await new Promise((r) => setTimeout(r, 500));
-    setStatus("success");
-  } catch (err) {
-    console.error("Reservation failed:", err);
-    setStatus("error");
-    setTimeout(() => setStatus("idle"), 3000);
-  }
-};
-
+  };
 
   const isBlocked =
     !available || status === "loading" || status === "success" || isLoading;
@@ -58,46 +55,29 @@ const handleClick = async () => {
   const isNotLoggedIn = !isAuthenticated || isLoading;
 
   let buttonText = "Zarezerwuj";
-  let buttonTitle = available
-    ? "Tworzy rezerwację"
-    : "Brak dostępnych egzemplarzy";
 
-  if (isLoading) {
-    buttonText = "Ładowanie…";
-  } else if (isNotLoggedIn) {
-    buttonText = "Zaloguj się, aby rezerwować";
-    buttonTitle = "Musisz być zalogowany";
-  } else if (status === "loading") {
-    buttonText = "Rezerwuję…";
-  } else if (status === "success") {
-    buttonText = "Zarezerwowano!";
-    buttonTitle = "Rezerwacja zakończona sukcesem";
-  } else if (!available) {
-    buttonText = "Niedostępna";
-    buttonTitle = "Brak dostępnych egzemplarzy";
-  }
+  if (isLoading) buttonText = "Ładowanie…";
+  else if (isNotLoggedIn) buttonText = "Zaloguj się, aby rezerwować";
+  else if (status === "loading") buttonText = "Rezerwuję…";
+  else if (status === "success") buttonText = "Zarezerwowano!";
+  else if (!available) buttonText = "Niedostępna";
 
   return (
     <div>
       <button
         onClick={handleClick}
         disabled={isBlocked || isNotLoggedIn}
-        className={reserveUI.base}           // ⬅️ TU UŻYWASZ NOWEGO DESIGN
-        title={buttonTitle}
+        className={reserveUI.base}
       >
         {buttonText}
       </button>
 
       {status === "success" && (
-        <p className={reserveUI.success}>
-          Zarezerwowano pomyślnie!
-        </p>
+        <p className={reserveUI.success}>Zarezerwowano pomyślnie!</p>
       )}
 
       {status === "error" && (
-        <p className={reserveUI.error}>
-          Błąd rezerwacji. Spróbuj ponownie.
-        </p>
+        <p className={reserveUI.error}>Błąd rezerwacji. Spróbuj ponownie.</p>
       )}
     </div>
   );

@@ -14,8 +14,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pl">
-      <body className="min-h-screen antialiased">
+      <body className="min-h-screen antialiased bg-transparent">
+
         {children}
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        />
       </body>
     </html>
   );

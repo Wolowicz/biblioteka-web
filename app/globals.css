@@ -5,23 +5,27 @@
   --foreground: #171717;
 }
 
-@theme inline {/* Konfiguracja motywu dla Tailwind (kolory i czcionki). */
-
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {/* Jeśli użytkownik ma ustawiony systemowy „ciemny motyw” → zmieniam kolory globalne. */
+@layer theme {/* Konfiguracja motywu dla Tailwind (kolory i czcionki). */
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
   }
 }
+
 
 body {/* domyślna czcionka i kolor tekstu i tła dla całego body*/
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.left-bg {
+  background-image: url('/library-bg.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-color: transparent !important;
+}
+

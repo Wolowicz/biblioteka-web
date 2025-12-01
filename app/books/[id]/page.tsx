@@ -1,8 +1,8 @@
 // app/books/[id]/page.tsx
 import BackButton from "../../_components/BackButton";
 import ReserveButton from "../../_components/ReserveButton";
-import { roleUI, panelUI } from "@/lib/ui/design";
-import { getUserSessionSSR } from "@/lib/auth-server";
+import { roleUI, panelUI } from "@/lib/ui/theme";
+import { getUserSessionSSR } from "@/lib/auth/server";
 import { headers } from "next/headers";
 
 export default async function Page({

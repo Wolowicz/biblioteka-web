@@ -2,11 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import pool from "@/lib/db";
 import bcrypt from "bcrypt";
-import { mapRoleFromDb } from "@/lib/role-map";
+import { mapRoleFromDb, isValidUserRole } from "@/lib/auth/role-map";
+
+
+
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password } = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Nieprawidłowe dane wejściowe" },
+        { status: 400 }
+      );
+    }
+
+    const { email, password } = body;
 
     if (!email || !password) {
       return NextResponse.json(
@@ -16,7 +29,8 @@ export async function POST(req: NextRequest) {
     }
 
     const [rows] = await pool.query(
-      `SELECT 
+      `
+        SELECT 
           u.UzytkownikId AS Id,
           u.Imie,
           u.Nazwisko,
@@ -27,7 +41,8 @@ export async function POST(req: NextRequest) {
         JOIN role r ON u.RolaId = r.RolaId
         WHERE u.Email = ?
           AND u.IsDeleted = 0
-          AND u.Aktywny = 1`,
+          AND u.Aktywny = 1
+      `,
       [email]
     );
 
@@ -50,28 +65,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
-   const session = {
-  id: String(user.Id),
-  email: user.Email,
-  firstName: user.Imie,
-  lastName: user.Nazwisko,
-  role: mapRoleFromDb(user.Rola),
-};
+    // Mapa roli (najważniejsze!)
+    const mappedRole = mapRoleFromDb(user.Rola);
 
+    if (!isValidUserRole(mappedRole)) {
+      console.warn("Ostrzeżenie: niezmapowana rola w DB:", user.Rola);
+    }
+
+    const session = {
+      id: String(user.Id),
+      email: user.Email,
+      firstName: user.Imie,
+      lastName: user.Nazwisko,
+      role: mappedRole,
+    };
+
+    // ZAPIS COOKIE
     const cookieStore = await cookies();
     cookieStore.set("userSession", JSON.stringify(session), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 2, // 2h
+      maxAge: 60 * 60 * 2,
     });
 
-    return NextResponse.json(session);
+    return NextResponse.json(session, { status: 200 });
   } catch (err) {
     console.error("Login error:", err);
+
     return NextResponse.json(
-      { error: "SERVER ERROR" },
+      { error: "Wewnętrzny błąd serwera" },
       { status: 500 }
     );
   }

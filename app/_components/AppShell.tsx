@@ -1,28 +1,22 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { UserSession, clearUserSession, UserRole } from "@/lib/auth-client";
 
-import { headerUI, sidebarUI, roleUI, panelUI } from "@/lib/ui/design";
+import { UserSession, UserRole, authLogout } from "@/lib/auth/index";
+import { theme, roleUI, themeMap } from "@/lib/ui/theme";
 
-import BorrowingsPanel from "../user/BorrowingsPanel";
-import AdminPanel from "../admin/AdminPanel";
-
-type ViewName = "catalog" | "borrowings" | "admin" | "reviews";
 
 export default function AppShell({
   user,
   children,
 }: {
-  user?: UserSession;
+  user: UserSession;
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [view, setView] = useState<ViewName>("catalog");
 
-  // brak usera → ładowanie
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -31,156 +25,124 @@ export default function AppShell({
     );
   }
 
-  // ---------------------------------------------
-  // BEZPIECZNY WYBÓR ROLI (typowany!)
-  // ---------------------------------------------
-  const availableRoles: UserRole[] = ["USER", "ADMIN", "LIBRARIAN"];
+  const role = user.role as UserRole;
+  const T = theme[themeMap[role]];
 
-  const roleKey: UserRole =
-    availableRoles.includes(user.role as UserRole)
-      ? (user.role as UserRole)
-      : "USER";
+  const ROLE_LABELS: Record<UserRole, string> = {
+    ADMIN: "Administrator",
+    LIBRARIAN: "Bibliotekarz",
+    USER: "Czytelnik",
+  };
 
-  // ---------------------------------------------
-  // UI zależne od roli — zawsze poprawne
-  // ---------------------------------------------
-  const H = headerUI[roleKey];
-  const S = sidebarUI[roleKey];
-  const P = panelUI[roleKey];
-  const background = roleUI[roleKey].background;
-
-
-  // Mapowanie ról na polskie nazwy (bez nowego modułu)
-const ROLE_LABELS: Record<UserRole, string> = {
-  ADMIN: "Administrator",
-  LIBRARIAN: "Bibliotekarz",
-  USER: "Czytelnik",
-};
-
-// Opcjonalne ikonki do ról
-const ROLE_ICONS: Record<UserRole, string> = {
-  ADMIN: "fas fa-user-shield",
-  LIBRARIAN: "fas fa-book",
-  USER: "fas fa-user",
-};
-
-
-
-  const isPrivileged = roleKey === "ADMIN" || roleKey === "LIBRARIAN";
-
-  const tabs = [
-    { label: "Katalog", view: "catalog", roles: ["USER", "LIBRARIAN", "ADMIN"] },
-    { label: "Moje wypożyczenia", view: "borrowings", roles: ["USER"] },
-    { label: "Recenzje", view: "reviews", roles: ["USER", "LIBRARIAN", "ADMIN"] },
-    { label: "Panel admina", view: "admin", roles: ["ADMIN"] },
-  ];
+  const ROLE_ICONS: Record<UserRole, string> = {
+    ADMIN: "fas fa-user-shield",
+    LIBRARIAN: "fas fa-book",
+    USER: "fas fa-user",
+  };
 
   const handleLogout = useCallback(async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-    } catch {}
-    clearUserSession();
+    await authLogout();
     router.push("/");
   }, [router]);
 
   return (
-    <div className={background}>
-      {/* ---------------- HEADER ---------------- */}
-      <header className={H.wrapper}>
-        <div className="flex items-center gap-3">
-          <Image src="/biblio.png" alt="logo" width={34} height={34} />
-          <h1 className={H.logo}>BiblioteQ</h1>
-        </div>
+    <div className={`${roleUI[role].background}`}>
 
-        <nav className="hidden md:flex gap-2">
-          {tabs
-            .filter((t) => t.roles.includes(roleKey))
-            .map((t) => (
+      {/* HEADER */}
+      <header
+        className={`w-full shadow-sm sticky top-0 z-50 transition
+          ${
+            role === "ADMIN"
+              ? "bg-[#141414] border-b border-[#333]"
+              : role === "LIBRARIAN"
+              ? "bg-[#eaeaea] border-b border-gray-300"
+              : "bg-white"
+          }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+
+          {/* LEWO */}
+          <div className="flex items-center gap-4">
+            <Image src="/biblio.png" alt="logo" width={28} height={28} />
+
+            <h1
+              className={`text-xl font-bold ${
+                role === "ADMIN" ? "text-white" : "text-gray-900"
+              }`}
+            >
+              BiblioteQ
+            </h1>
+
+            {/* NAV */}
+            <nav className="hidden md:flex gap-8 ml-10">
               <button
-                key={t.view}
-                onClick={() => setView(t.view as ViewName)}
-                className={view === t.view ? H.tabActive : H.tabBase}
+                onClick={() => router.push("/")}
+                className="text-sm font-medium hover:text-blue-600"
               >
-                {t.label}
+                Katalog
               </button>
-            ))}
-        </nav>
 
-        <div className={H.userMenu}>
-          <button className={H.iconBtn}>
-            <i className="fas fa-bell"></i>
-          </button>
+              {role === "USER" && (
+                <button
+                  onClick={() => router.push("/borrowings")}
+                  className="text-sm font-medium hover:text-blue-600"
+                >
+                  Moje wypożyczenia
+                </button>
+              )}
 
-          <span className={H.roleBadge}>
-          <i className={`${ROLE_ICONS[roleKey]} mr-1`} />
-          {user.firstName} {user.lastName} — {ROLE_LABELS[roleKey]}
-          </span>
+              {role === "ADMIN" && (
+                <button
+                  onClick={() => router.push("/admin")}
+                  className="text-sm font-medium hover:text-blue-600"
+                >
+                  Panel admina
+                </button>
+              )}
+            </nav>
+          </div>
 
+          {/* PRAWO */}
+          <div className="flex items-center gap-4">
+            <i
+              className={`fas fa-bell ${
+                role === "ADMIN"
+                  ? "text-gray-300 hover:text-white"
+                  : "text-gray-600 hover:text-blue-600"
+              } cursor-pointer`}
+            ></i>
 
-          <button onClick={handleLogout} className={H.logoutBtn}>
-            <i className="fas fa-sign-out-alt" />
-            <span>Wyloguj</span>
-          </button>
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2
+                ${
+                  role === "ADMIN"
+                    ? "bg-[#222] text-gray-200 border border-[#333]"
+                    : "bg-gray-200 border border-gray-300"
+                }`}
+            >
+              <i className={ROLE_ICONS[role]}></i>
+              {user.firstName} {user.lastName} — {ROLE_LABELS[role]}
+            </span>
+
+            <button
+              onClick={handleLogout}
+              className={`px-4 py-2 rounded-full transition font-bold
+                ${
+                  role === "ADMIN"
+                    ? "bg-blue-600 hover:bg-blue-500 text-white"
+                    : role === "LIBRARIAN"
+                    ? "bg-gray-800 hover:bg-gray-700 text-white"
+                    : "bg-blue-600 hover:bg-blue-500 text-white"
+                }`}
+            >
+              Wyloguj
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* ---------------- LAYOUT ---------------- */}
-      <main className="grid grid-cols-1 lg:grid-cols-5 gap-6 p-6">
-        {/* ---- Sidebar ---- */}
-        <aside className="lg:col-span-1">
-          <div className={S.wrapper}>
-            <h2 className={S.section}>Kategorie</h2>
-            <div className="space-y-1">
-              <div className={S.item}>Fantastyka</div>
-              <div className={S.item}>Historia</div>
-            </div>
-
-            <h2 className={S.section}>Sortowanie</h2>
-            <div className={S.toggle}>
-              <span className="text-sm">Najnowsze</span>
-              <input type="checkbox" className="hidden" defaultChecked />
-            </div>
-
-            <div className={S.toggle}>
-              <span className="text-sm">Ocena</span>
-              <input type="checkbox" className="hidden" />
-            </div>
-          </div>
-        </aside>
-
-        {/* ---- Content ---- */}
-        <section className={isPrivileged ? "lg:col-span-3" : "lg:col-span-4"}>
-          {view === "catalog" && children}
-
-          {view === "borrowings" && roleKey === "USER" && (
-            <BorrowingsPanel userRole={roleKey} />
-          )}
-
-          {view === "reviews" && (
-            <div className={P.card}>
-              <h2 className={P.header}>Recenzje (do zrobienia)</h2>
-              <p className={P.label}>Tu będą recenzje użytkowników.</p>
-            </div>
-          )}
-
-          {view === "admin" &&
-            (isPrivileged ? (
-              <AdminPanel user={user} />
-            ) : (
-              <p className="text-red-500">Brak dostępu.</p>
-            ))}
-        </section>
-
-        {/* ---- Right Panel ---- */}
-        {isPrivileged && (
-          <aside className="lg:col-span-1">
-            <div className={P.card}>
-              <h2 className={P.header}>Szybkie Akcje</h2>
-              <p className={P.label}>Rola: {roleKey}</p>
-            </div>
-          </aside>
-        )}
-      </main>
+      {/* TREŚĆ */}
+      <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
     </div>
   );
 }

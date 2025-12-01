@@ -1,28 +1,20 @@
-// app/_components/BackButton.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
-import { backUI } from "@/lib/ui/design";
-import { useAuth } from "@/lib/hooks";   // żeby pobrać rolę użytkownika
+import { useAuth } from "@/lib/auth";
+import { backUI, roleUI } from "@/lib/ui/theme";
 
 export default function BackButton() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const handleClick = () => {
-    if (typeof window !== "undefined" && window.history.length <= 1) {
-      router.push("/");
-    } else {
-      router.back();
-    }
-  };
-
-  // wybór stylu zależnie od roli
-  const cls =
-    user?.role === "ADMIN" ? backUI.baseDark : backUI.base;
+  const role = user?.role || "USER";
 
   return (
-    <button onClick={handleClick} className={cls}>
+    <button
+      onClick={() => router.back()}
+      className={`${backUI.base} ${roleUI[role].text}`}
+    >
       ← Powrót
     </button>
   );

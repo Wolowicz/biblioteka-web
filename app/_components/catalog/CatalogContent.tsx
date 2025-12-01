@@ -1,7 +1,7 @@
 "use client";
 
 import ClientFilter, { BookVM } from "../ClientFilter";
-import { UserRole } from "@/lib/auth-client";
+import { UserRole } from "@/lib/auth/index";
 
 export default function CatalogContent({
   books,
@@ -13,13 +13,16 @@ export default function CatalogContent({
   const showReserveButton = role === "USER";
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Katalog Książek</h2>
+    <div className="space-y-8">
+      <h2 className="text-4xl font-black">Katalog Książek</h2>
+      <p className="text-gray-600 text-lg">
+        Przeglądaj, wyszukuj i odkrywaj nowe tytuły w naszej kolekcji.
+      </p>
 
       <ClientFilter
         books={books}
         showReserveButton={showReserveButton}
-        role={role}          // <<< NAJWAŻNIEJSZE
+        role={role}
       />
     </div>
   );

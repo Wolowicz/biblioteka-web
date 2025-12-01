@@ -1,46 +1,66 @@
 "use client";
 
-import { panelUI, roleUI } from "@/lib/ui/design";
-import { UserRole } from "@/lib/auth-client";
+import { theme } from "@/lib/ui/theme";
+import { UserRole } from "@/lib/auth/index";
 
 export default function BorrowingsPanel({
   userRole,
 }: {
   userRole: UserRole;
 }) {
-  const P = panelUI[userRole];   // poprawne typowanie
-  const R = roleUI[userRole];    // poprawne typowanie
+  // wybieramy theme zależnie od roli
+  const T =
+    userRole === "ADMIN"
+      ? theme.admin
+      : userRole === "LIBRARIAN"
+      ? theme.librarian
+      : theme.user;
 
   return (
-    <div className={P.wrapper}>
-      <h1 className={P.header}>Moje Wypożyczenia i Kary</h1>
+    <div className="space-y-8">
 
-      <div className={P.card}>
-        <h2 className={P.subheader}>Lalka</h2>
+      {/* NAGŁÓWEK */}
+      <div className={`${T.card} p-6 rounded-2xl shadow-md`}>
+        <h1 className="text-2xl font-bold">Moje Wypożyczenia i Kary</h1>
+        <p className="opacity-70 mt-1 text-sm">
+          Przegląd aktualnych wypożyczeń oraz historii.
+        </p>
+      </div>
 
-        <p className={P.label}>Autor: Bolesław Prus</p>
-        <p className={P.label}>Wypożyczono: 24.11.2025</p>
-        <p className={P.label}>Termin zwrotu: 24.12.2025</p>
+      {/* PRZYKŁADOWA KSIĄŻKA */}
+      <div className={`${T.card} p-6 rounded-2xl shadow-md`}>
+        <h2 className="text-xl font-semibold">Lalka</h2>
+
+        <p className="opacity-80 mt-2">Autor: Bolesław Prus</p>
+        <p className="opacity-80">Wypożyczono: 24.11.2025</p>
+        <p className="opacity-80">Termin zwrotu: 24.12.2025</p>
 
         <div
-          className={`flex justify-between mt-4 pt-4 ${
-            userRole === "USER"
-              ? "border-t border-gray-300"
-              : "border-t border-white/20"
+          className={`flex justify-between items-center mt-4 pt-4 border-t ${
+            userRole === "ADMIN"
+              ? "border-gray-700"
+              : userRole === "LIBRARIAN"
+              ? "border-gray-500"
+              : "border-gray-300"
           }`}
         >
           <span
-            className={
-              userRole === "USER"
-                ? "text-blue-700 font-semibold"
-                : "text-blue-300 font-semibold"
-            }
+            className={`font-semibold ${
+              userRole === "ADMIN"
+                ? "text-blue-300"
+                : userRole === "LIBRARIAN"
+                ? "text-indigo-700"
+                : "text-blue-700"
+            }`}
           >
             AKTYWNE
           </span>
 
-          <button className={P.button}>
-            <i className="fas fa-file-pdf mr-2" /> Dokument PDF
+          <button
+            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow flex items-center gap-2"
+          >
+            <i className="fas fa-file-pdf"></i>
+            Dokument PDF
           </button>
         </div>
       </div>

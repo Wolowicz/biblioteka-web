@@ -1,11 +1,11 @@
 // app/page.tsx
 import { headers } from "next/headers";
-import { getUserSessionSSR } from "@/lib/auth-server";
+import { getUserSessionSSR } from "@/lib/auth/server";
 import WelcomePage from "./welcome/page";
 import AppShell from "./_components/AppShell";
 import ClientFilter from "./_components/ClientFilter";
 import type { BookVM } from "./_components/ClientFilter";
-import { UserRole } from "@/lib/auth-client";
+
 
 // Pobieranie książek z API
 async function getBooks(): Promise<BookVM[]> {
@@ -47,7 +47,7 @@ export default async function Page() {
         <ClientFilter
           books={books}
           showReserveButton={user.role === "USER"}
-          role={user.role}     // <-- KLUCZOWE, przekazujemy rolę do UI
+          role={user.role}
         />
       </div>
     </AppShell>
