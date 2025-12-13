@@ -1,14 +1,61 @@
+/**
+ * =============================================================================
+ * API: POST /api/auth/login - Logowanie użytkownika
+ * =============================================================================
+ * 
+ * Endpoint autoryzacji użytkownika w systemie bibliotecznym.
+ * 
+ * Przepływ:
+ * 1. Walidacja danych wejściowych (email, hasło)
+ * 2. Wyszukanie użytkownika w bazie danych
+ * 3. Weryfikacja hasła przez bcrypt
+ * 4. Mapowanie roli z polskiej nazwy na enum
+ * 5. Utworzenie sesji i zapisanie w cookie
+ * 
+ * Bezpieczeństwo:
+ * - Hasła przechowywane jako hash bcrypt
+ * - Cookie httpOnly (niedostępne dla JS)
+ * - Cookie secure w produkcji (tylko HTTPS)
+ * - Sesja wygasa po 2 godzinach
+ * 
+ * Kody odpowiedzi:
+ * - 200: Sukces, zwraca dane sesji
+ * - 400: Błąd walidacji lub nieprawidłowe dane
+ * - 500: Błąd serwera
+ * 
+ * @packageDocumentation
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import pool from "@/lib/db";
 import bcrypt from "bcrypt";
 import { mapRoleFromDb, isValidUserRole } from "@/lib/auth/role-map";
+import type { UserSession } from "@/domain/types";
 
+// =============================================================================
+// STAŁE KONFIGURACYJNE
+// =============================================================================
 
+/** Czas życia sesji w sekundach (2 godziny) */
+const SESSION_MAX_AGE = 60 * 60 * 2;
 
+// =============================================================================
+// HANDLER POST
+// =============================================================================
 
+/**
+ * Obsługuje żądanie logowania.
+ * 
+ * @param req - Żądanie Next.js z body { email, password }
+ * @returns Odpowiedź JSON z danymi sesji lub błędem
+ */
 export async function POST(req: NextRequest) {
   try {
+    // -------------------------------------------------------------------------
+    // 1. PARSOWANIE I WALIDACJA BODY
+    // -------------------------------------------------------------------------
+    
     let body;
     try {
       body = await req.json();
@@ -21,6 +68,7 @@ export async function POST(req: NextRequest) {
 
     const { email, password } = body;
 
+    // Walidacja wymaganych pól
     if (!email || !password) {
       return NextResponse.json(
         { error: "Podaj email i hasło" },
@@ -28,6 +76,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // -------------------------------------------------------------------------
+    // 2. WYSZUKANIE UŻYTKOWNIKA W BAZIE DANYCH
+    // -------------------------------------------------------------------------
+    
     const [rows] = await pool.query(
       `
         SELECT 
@@ -48,6 +100,7 @@ export async function POST(req: NextRequest) {
 
     const users = rows as any[];
 
+    // Użytkownik nie istnieje lub jest nieaktywny
     if (users.length === 0) {
       return NextResponse.json(
         { error: "Nieprawidłowy login lub hasło" },
@@ -57,22 +110,33 @@ export async function POST(req: NextRequest) {
 
     const user = users[0];
 
-    const ok = await bcrypt.compare(password, user.HasloHash);
-    if (!ok) {
+    // -------------------------------------------------------------------------
+    // 3. WERYFIKACJA HASŁA
+    // -------------------------------------------------------------------------
+    
+    const passwordValid = await bcrypt.compare(password, user.HasloHash);
+    
+    if (!passwordValid) {
       return NextResponse.json(
         { error: "Nieprawidłowy login lub hasło" },
         { status: 400 }
       );
     }
 
-    // Mapa roli (najważniejsze!)
+    // -------------------------------------------------------------------------
+    // 4. MAPOWANIE ROLI I TWORZENIE SESJI
+    // -------------------------------------------------------------------------
+    
+    // Mapuj polską nazwę roli na enum (np. "Administrator" -> "ADMIN")
     const mappedRole = mapRoleFromDb(user.Rola);
 
+    // Ostrzeżenie deweloperskie jeśli rola nieznana
     if (!isValidUserRole(mappedRole)) {
       console.warn("Ostrzeżenie: niezmapowana rola w DB:", user.Rola);
     }
 
-    const session = {
+    // Obiekt sesji użytkownika
+    const session: UserSession = {
       id: String(user.Id),
       email: user.Email,
       firstName: user.Imie,
@@ -80,18 +144,27 @@ export async function POST(req: NextRequest) {
       role: mappedRole,
     };
 
-    // ZAPIS COOKIE
+    // -------------------------------------------------------------------------
+    // 5. ZAPISANIE SESJI W COOKIE
+    // -------------------------------------------------------------------------
+    
     const cookieStore = await cookies();
     cookieStore.set("userSession", JSON.stringify(session), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      httpOnly: true, // Niedostępne dla JavaScript (ochrona przed XSS)
+      secure: process.env.NODE_ENV === "production", // HTTPS w produkcji
+      sameSite: "lax", // Ochrona przed CSRF
       path: "/",
-      maxAge: 60 * 60 * 2,
+      maxAge: SESSION_MAX_AGE,
     });
 
+    // Zwróć dane sesji (bez hasła)
     return NextResponse.json(session, { status: 200 });
+    
   } catch (err) {
+    // -------------------------------------------------------------------------
+    // OBSŁUGA BŁĘDÓW
+    // -------------------------------------------------------------------------
+    
     console.error("Login error:", err);
 
     return NextResponse.json(

@@ -1,49 +1,131 @@
-// app/page.tsx
+/**
+ * =============================================================================
+ * HOME PAGE - Strona główna aplikacji
+ * =============================================================================
+ * 
+ * Główna strona aplikacji bibliotecznej. Jest to Server Component (SSR),
+ * który decyduje co wyświetlić na podstawie stanu autoryzacji użytkownika.
+ * 
+ * Logika routingu:
+ * - Niezalogowany użytkownik → strona powitalna (WelcomePage)
+ * - Zalogowany użytkownik → katalog książek (AppShell + ClientFilter)
+ * 
+ * Przepływ danych:
+ * 1. Pobierz sesję użytkownika z cookie (SSR)
+ * 2. Jeśli brak sesji → renderuj WelcomePage
+ * 3. Jeśli sesja istnieje → pobierz książki z API
+ * 4. Renderuj AppShell z katalogiem książek
+ * 
+ * Zależności:
+ * - @/lib/auth/server - pobieranie sesji SSR
+ * - @/domain/types - typy danych (BookViewModel)
+ * - ./welcome/page - strona powitalna
+ * - ./_components/AppShell - główny layout dla zalogowanych
+ * - ./_components/ClientFilter - filtrowanie i wyświetlanie książek
+ */
+
 import { headers } from "next/headers";
 import { getUserSessionSSR } from "@/lib/auth/server";
 import WelcomePage from "./welcome/page";
 import AppShell from "./_components/AppShell";
 import ClientFilter from "./_components/ClientFilter";
-import type { BookVM } from "./_components/ClientFilter";
+import type { BookViewModel } from "@/domain/types";
 
+// =============================================================================
+// FUNKCJE POMOCNICZE (SERVER-SIDE)
+// =============================================================================
 
-// Pobieranie książek z API
-async function getBooks(): Promise<BookVM[]> {
+/**
+ * Pobiera listę wszystkich książek z API.
+ * 
+ * Funkcja jest wywoływana po stronie serwera (SSR) i używa
+ * bezwzględnego URL zbudowanego z nagłówka Host.
+ * 
+ * @returns Promise z tablicą książek lub pustą tablicą w przypadku błędu
+ * 
+ * Uwagi:
+ * - cache: "no-store" - zawsze pobiera świeże dane
+ * - W development używa http://, w produkcji https://
+ * - W przypadku błędu loguje do konsoli i zwraca pustą tablicę
+ */
+async function getBooks(): Promise<BookViewModel[]> {
+  // Pobierz nagłówki żądania (potrzebne do zbudowania URL)
   const h = await headers();
   const host = h.get("host")!;
-  const protocol =
-    process.env.NODE_ENV === "development" ? "http" : "https";
+  
+  // Ustal protokół na podstawie środowiska
+  const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+  
+  // Zbuduj pełny URL do API
   const url = `${protocol}://${host}/api/books`;
 
-  const res = await fetch(url, { cache: "no-store" });
+  try {
+    // Wykonaj żądanie do API
+    const res = await fetch(url, { cache: "no-store" });
 
-  if (!res.ok) {
-    console.error("BOOK API ERROR:", res.status);
+    // Sprawdź czy odpowiedź jest poprawna
+    if (!res.ok) {
+      console.error("BOOK API ERROR:", res.status);
+      return [];
+    }
+
+    // Parsuj i zwróć dane JSON
+    return res.json();
+  } catch (error) {
+    // Obsłuż błąd sieciowy
+    console.error("BOOK API NETWORK ERROR:", error);
     return [];
   }
-
-  return res.json();
 }
 
+// =============================================================================
+// KOMPONENT STRONY
+// =============================================================================
+
+/**
+ * Główna strona aplikacji.
+ * 
+ * Server Component - cała logika wykonuje się na serwerze.
+ * 
+ * @returns JSX strony (WelcomePage lub AppShell z katalogiem)
+ */
 export default async function Page() {
-  // Sesja użytkownika (SSR)
+  // ---------------------------------------------------------------------------
+  // 1. POBIERZ SESJĘ UŻYTKOWNIKA (z cookie)
+  // ---------------------------------------------------------------------------
   const user = await getUserSessionSSR();
 
-  // Niezalogowany → strona powitalna
+  // ---------------------------------------------------------------------------
+  // 2. ROUTING NA PODSTAWIE AUTORYZACJI
+  // ---------------------------------------------------------------------------
+  
+  // Niezalogowany użytkownik → strona powitalna
   if (!user) {
     return <WelcomePage />;
   }
 
-  // Zalogowany → pobieramy książki
+  // ---------------------------------------------------------------------------
+  // 3. ZALOGOWANY UŻYTKOWNIK → POBIERZ DANE I RENDERUJ KATALOG
+  // ---------------------------------------------------------------------------
+  
+  // Pobierz listę książek z API
   const books = await getBooks();
 
   return (
     <AppShell user={user}>
+      {/* Sekcja katalogu książek */}
       <div>
+        {/* Nagłówek sekcji */}
         <h2 className="text-2xl font-bold mb-4">
           Katalog Książek
         </h2>
 
+        {/* 
+          Komponent filtrowania i wyświetlania książek (Client Component)
+          - books: lista książek do wyświetlenia
+          - showReserveButton: tylko USER może rezerwować
+          - role: rola użytkownika (do stylowania)
+        */}
         <ClientFilter
           books={books}
           showReserveButton={user.role === "USER"}
