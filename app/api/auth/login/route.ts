@@ -40,6 +40,9 @@ import type { UserSession } from "@/domain/types";
 /** Czas życia sesji w sekundach (2 godziny) */
 const SESSION_MAX_AGE = 60 * 60 * 2;
 
+/** Czas życia sesji "zapamiętaj mnie" w sekundach (30 dni) */
+const SESSION_REMEMBER_MAX_AGE = 60 * 60 * 24 * 30;
+
 // =============================================================================
 // HANDLER POST
 // =============================================================================
@@ -66,7 +69,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, password } = body;
+    const { email, password, rememberMe = false } = body;
 
     // Walidacja wymaganych pól
     if (!email || !password) {
@@ -148,14 +151,24 @@ export async function POST(req: NextRequest) {
     // 5. ZAPISANIE SESJI W COOKIE
     // -------------------------------------------------------------------------
     
+    // Ustaw czas życia sesji w zależności od "zapamiętaj mnie"
+    const sessionMaxAge = rememberMe ? SESSION_REMEMBER_MAX_AGE : SESSION_MAX_AGE;
+    
     const cookieStore = await cookies();
     cookieStore.set("userSession", JSON.stringify(session), {
       httpOnly: true, // Niedostępne dla JavaScript (ochrona przed XSS)
       secure: process.env.NODE_ENV === "production", // HTTPS w produkcji
       sameSite: "lax", // Ochrona przed CSRF
       path: "/",
-      maxAge: SESSION_MAX_AGE,
+      maxAge: sessionMaxAge,
     });
+
+    // Log logowania
+    await pool.query(
+      `INSERT INTO logi (TypCoSieStalo, UzytkownikId, Opis, Encja, EncjaId)
+       VALUES ('Bezpieczenstwo', ?, ?, 'Uzytkownicy', ?)`,
+      [user.Id, `Zalogowano${rememberMe ? ' (zapamiętaj mnie)' : ''}`, user.Id]
+    );
 
     // Zwróć dane sesji (bez hasła)
     return NextResponse.json(session, { status: 200 });

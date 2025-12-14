@@ -76,8 +76,8 @@ export const roleUI = {
     text: "text-gray-900",
   },
   
-  /** Użytkownik - czysty biały */
-  USER: {
+  /** Czytelnik - czysty biały */
+  READER: {
     background: "bg-white text-gray-900 min-h-screen",
     text: "text-gray-900",
   },
@@ -112,8 +112,8 @@ export const panelUI = {
     value: "text-indigo-700",
   },
 
-  /** Style dla panelu użytkownika */
-  USER: {
+  /** Style dla panelu czytelnika */
+  READER: {
     card: "bg-white border border-gray-200 p-6 rounded-2xl",
     header: "text-3xl font-bold text-gray-900",
     subheader: "text-gray-600",
@@ -171,11 +171,11 @@ export const backUI = {
  * const colors = theme[themeKey]; // { bg: "...", card: "...", link: "..." }
  * ```
  */
-export const themeMap = {
+export const themeMap: Record<UserRole, keyof typeof theme> = {
   ADMIN: "admin",
   LIBRARIAN: "librarian",
-  USER: "user",
-} as const;
+  READER: "user",
+};
 
 /**
  * Typ klucza motywu.

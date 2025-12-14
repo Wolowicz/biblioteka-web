@@ -140,6 +140,21 @@ export async function POST(req: Request) {
       [egzemplarzId]
     );
 
+    // === SEKCJA: Aktualizacja liczby dostępnych egzemplarzy ===
+    await pool.query(
+      `
+      UPDATE ksiazki k
+      SET DostepneEgzemplarze = (
+        SELECT COUNT(*) FROM egzemplarze e 
+        WHERE e.KsiazkaId = k.KsiazkaId 
+        AND e.Status = 'Dostepny' 
+        AND e.IsDeleted = 0
+      )
+      WHERE k.KsiazkaId = ?
+      `,
+      [bookId]
+    );
+
     // === SEKCJA: Odpowiedź sukcesu ===
     return NextResponse.json({
       message: "Rezerwacja utworzona",

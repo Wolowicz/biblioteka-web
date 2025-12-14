@@ -24,6 +24,9 @@ export class Borrowing implements BorrowingData {
   /** Unikalny identyfikator wypożyczenia */
   public readonly id: number;
   
+  /** ID książki */
+  public readonly bookId: number;
+  
   /** Tytuł książki */
   public readonly title: string;
   
@@ -42,6 +45,9 @@ export class Borrowing implements BorrowingData {
   /** Data faktycznego zwrotu */
   public readonly returnedDate: string | null;
   
+  /** Liczba przedłużeń */
+  public readonly extensionCount: number;
+  
   /** Kwota kary */
   public readonly fine: number;
 
@@ -57,12 +63,14 @@ export class Borrowing implements BorrowingData {
    */
   constructor(data: BorrowingData) {
     this.id = data.id;
+    this.bookId = data.bookId;
     this.title = data.title;
     this.author = data.author;
     this.coverUrl = data.coverUrl;
     this.borrowDate = data.borrowDate;
     this.dueDate = data.dueDate;
     this.returnedDate = data.returnedDate;
+    this.extensionCount = data.extensionCount || 0;
     this.fine = data.fine || 0;
 
     // Konwersja dat do obiektów Date dla łatwiejszych obliczeń
@@ -244,12 +252,14 @@ export class Borrowing implements BorrowingData {
   public toData(): BorrowingData {
     return {
       id: this.id,
+      bookId: this.bookId,
       title: this.title,
       author: this.author,
       coverUrl: this.coverUrl,
       borrowDate: this.borrowDate,
       dueDate: this.dueDate,
       returnedDate: this.returnedDate,
+      extensionCount: this.extensionCount,
       fine: this.fine,
     };
   }

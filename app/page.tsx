@@ -69,8 +69,11 @@ async function getBooks(): Promise<BookViewModel[]> {
       return [];
     }
 
-    // Parsuj i zwróć dane JSON
-    return res.json();
+    // Parsuj dane JSON
+    const data = await res.json();
+    
+    // Zwróć tablicę książek z obiektu odpowiedzi
+    return data.books || data || [];
   } catch (error) {
     // Obsłuż błąd sieciowy
     console.error("BOOK API NETWORK ERROR:", error);
@@ -113,25 +116,12 @@ export default async function Page() {
 
   return (
     <AppShell user={user}>
-      {/* Sekcja katalogu książek */}
-      <div>
-        {/* Nagłówek sekcji */}
-        <h2 className="text-2xl font-bold mb-4">
-          Katalog Książek
-        </h2>
-
-        {/* 
-          Komponent filtrowania i wyświetlania książek (Client Component)
-          - books: lista książek do wyświetlenia
-          - showReserveButton: tylko USER może rezerwować
-          - role: rola użytkownika (do stylowania)
-        */}
-        <ClientFilter
-          books={books}
-          showReserveButton={user.role === "USER"}
-          role={user.role}
-        />
-      </div>
+      {/* Komponent filtrowania i wyświetlania książek (Client Component) */}
+      <ClientFilter
+        books={books}
+        showReserveButton={user.role === "READER"}
+        role={user.role}
+      />
     </AppShell>
   );
 }

@@ -194,13 +194,15 @@ export default function ReserveButton({
       disabled={disabled}
       aria-busy={status === "loading"}
       className={`
-        px-4 py-2 rounded-xl text-sm font-semibold transition
+        w-full py-3 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2
         ${disabled
           ? "bg-gray-400 cursor-not-allowed text-white"
           : "bg-blue-600 hover:bg-blue-500 text-white"
         }
       `}
     >
+      {status === "loading" && <i className="fas fa-spinner fa-spin" aria-hidden="true"></i>}
+      {status === "success" && <i className="fas fa-check" aria-hidden="true"></i>}
       {buttonText}
     </button>
   );

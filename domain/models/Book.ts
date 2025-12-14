@@ -204,11 +204,13 @@ export class Book implements BookViewModel {
       available: this.available,
       coverUrl: this.coverUrl,
       isbn: this.isbn!,
-      publisher: this.publisher!,
-      year: this.year!,
+      publisher: this.publisher ?? "",
+      year: this.year ?? 0,
       description: this.description,
       category: this.category,
       pageCount: this.pageCount,
+      totalCopies: 1,
+      availableCopies: this.available ? 1 : 0,
     };
   }
 

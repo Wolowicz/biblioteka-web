@@ -59,7 +59,7 @@ export default function CatalogContent({
    * Przycisk rezerwacji widoczny tylko dla roli USER.
    * ADMIN i LIBRARIAN mają inne opcje zarządzania.
    */
-  const showReserveButton = role === "USER";
+  const showReserveButton = role === "READER";
 
   // ---------------------------------------------------------------------------
   // RENDER

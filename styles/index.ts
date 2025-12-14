@@ -64,7 +64,7 @@ export const roleTheme = {
     roleBadge: "bg-gray-200 border border-gray-300",
     logoutButton: "bg-gray-800 hover:bg-gray-700 text-white",
   },
-  USER: {
+  READER: {
     background: "bg-white text-gray-900 min-h-screen",
     text: "text-gray-900",
     headerBg: "bg-white",

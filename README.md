@@ -1,278 +1,961 @@
-# 📚 BiblioteQ
+# 📚 BiblioteQ - System Zarządzania Biblioteką
 
-> Nowoczesny system zarządzania biblioteką – Next.js + MySQL + TypeScript
+Nowoczesny, responsywny system zarządzania biblioteką zbudowany w technologii **Next.js 16** z **TypeScript**, **Tailwind CSS** i **MySQL**.
 
----
-
-## 1. Wprowadzenie
-
-Projekt **BiblioteQ** stanowi część systemu informatycznego przeznaczonego do zarządzania zasobami bibliotecznymi. Aplikacja została zaprojektowana jako moduł webowy, odpowiedzialny za obsługę interakcji użytkowników z funkcjonalnościami systemu bibliotecznego.
-
-System został wykonany z wykorzystaniem technologii **Next.js** (React) z integracją z relacyjną bazą danych **MySQL**, co umożliwia stworzenie rozwiązania modularnego, skalowalnego i przystosowanego do dalszej rozbudowy.
+![Next.js](https://img.shields.io/badge/Next.js-16.0.1-black)
+![React](https://img.shields.io/badge/React-19-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
+![MySQL](https://img.shields.io/badge/MySQL-5.7+-orange)
+![Tailwind](https://img.shields.io/badge/Tailwind-4.0-cyan)
 
 ---
 
-## 2. Funkcjonalności
+## 📋 Spis Treści
 
-### 🔐 Autoryzacja
-- Rejestracja nowych użytkowników z walidacją hasła (min. 8 znaków, duża/mała litera, cyfra, znak specjalny)
-- Logowanie z obsługą sesji (cookie httpOnly)
-- Trzy role użytkowników: **Czytelnik**, **Bibliotekarz**, **Administrator**
-- Mapowanie ról z bazy danych (polski/angielski format)
-
-### 📖 Katalog książek
-- Przeglądanie katalogu z nowoczesnym interfejsem kafelkowym
-- Filtrowanie po tytule, autorze i statusie dostępności
-- Sortowanie (A-Z, Z-A, popularność)
-- Szczegóły książki z okładką, opisem i informacjami bibliograficznymi
-- System rezerwacji dla zalogowanych czytelników
-
-### 📚 Wypożyczenia
-- Lista wypożyczeń użytkownika ze statystykami
-- Statusy: Aktywne, Termin wkrótce, Po terminie, Zwrócone
-- Automatyczne wykrywanie przekroczenia terminu
-- Karty wypożyczeń z kolorowymi badge'ami statusu
-
-### ⚙️ Panel administracyjny
-- Statystyki systemu (użytkownicy, książki, wypożyczenia)
-- Szybkie akcje (dodawanie, edycja)
-- Feed ostatnich aktywności
-- Sekcja kosza (soft delete)
+- [Funkcjonalności](#-funkcjonalności)
+- [Technologie](#️-technologie)
+- [Instalacja](#-instalacja)
+- [Struktura Projektu](#-struktura-projektu)
+- [Schemat Bazy Danych](#️-schemat-bazy-danych)
+- [API Documentation](#-api-documentation)
+- [Bezpieczeństwo](#-bezpieczeństwo)
+- [Troubleshooting](#-troubleshooting)
 
 ---
 
-## 3. Wykorzystane technologie
+## 🚀 Funkcjonalności
 
-| Technologia | Wersja | Opis |
-|-------------|--------|------|
-| **Next.js** | 16.0.1 | Framework React z App Router |
-| **React** | 19.2.0 | Biblioteka UI |
-| **TypeScript** | 5.x | Statyczne typowanie |
-| **TailwindCSS** | 4.x | Stylizacja utility-first |
-| **MySQL** | 8.x | Relacyjna baza danych |
-| **mysql2/promise** | - | Async driver MySQL |
-| **bcryptjs** | - | Hashowanie haseł |
-| **FontAwesome** | 6.5 | Ikony (CDN) |
+### 👥 System Ról
+
+#### **Czytelnik (READER)**
+- 📖 **Katalog książek** - przeglądanie, filtrowanie, sortowanie
+- ⭐ **Ulubione** - zapisywanie ulubionych książek
+- 🔍 **Wyszukiwanie** - po tytule, autorze, ISBN, gatunku
+- 📋 **Rezerwacje** - rezerwacja dostępnych książek online
+- 📚 **Wypożyczenia** - zarządzanie aktywnymi i historycznymi wypożyczeniami
+- 📅 **Przedłużenia** - przedłużanie terminu zwrotu (max 2x)
+- 💰 **Opłaty** - podgląd kar za przetrzymanie
+- 📝 **Recenzje** - ocenianie i recenzowanie książek (1-5 ⭐)
+- 👤 **Profil** - zarządzanie danymi osobowymi
+- 🔔 **Powiadomienia** - alerty o zbliżających się terminach
+
+#### **Bibliotekarz (LIBRARIAN)**
+- 👥 **Użytkownicy** - zarządzanie czytelnikami
+- 📦 **Obsługa wypożyczeń** - wydawanie i przyjmowanie książek
+- 💵 **Opłaty** - naliczanie i zarządzanie karami
+- 📊 **Statystyki** - podgląd aktywnych wypożyczeń i przetrzymań
+- 🔍 **Wyszukiwanie** - szybkie wyszukiwanie książek i użytkowników
+- 📋 **Rezerwacje** - obsługa kolejki rezerwacji
+
+#### **Administrator (ADMIN)**
+- 👑 **Wszystkie uprawnienia bibliotekarza**
+- 📚 **Zarządzanie katalogiem** - dodawanie, edycja, usuwanie książek (soft delete)
+- 👨‍💼 **Zarządzanie użytkownikami** - tworzenie kont, zmiana ról
+- 🏷️ **Gatunki** - zarządzanie kategoriami książek
+- 📊 **Zaawansowane statystyki** - wykresy, raporty, top listy
+- 📜 **Logi systemowe** - historia akcji użytkowników
+- ⚙️ **Konfiguracja** - ustawienia systemu
+
+### 🎨 UI/UX Features
+
+- ✨ **Nowoczesny design** - młodzieżowy styl z gradientami i animacjami
+- 📱 **Responsywny** - mobile-first approach
+- 🎭 **Smooth animations** - transitions, hover effects
+- 💫 **Interactive components** - karty książek, modalne okna, toasty
+- 🔐 **Bezpieczne logowanie** - z funkcją "Zapamiętaj mnie"
+- 🌙 **User card** - szybki dostęp do profilu w prawym górnym rogu
+- ⚡ **Fast loading** - SSR, optymalizacja obrazów
+- 🎯 **Intuitive navigation** - przejrzysta nawigacja
+
+### 📊 Statystyki (Panel Admina)
+
+- 📈 **Wykres wypożyczeń** - trend w ostatnich 30 dniach
+- 👤 **Top czytelnicy** - najbardziej aktywni użytkownicy
+- 📖 **Popularne książki** - najczęściej wypożyczane
+- 💰 **Statystyki opłat** - suma kar, rozliczenia
+- 📉 **Przetrzymania** - lista książek po terminie
+- 🎯 **Gatunki** - rozkład popularności kategorii
 
 ---
 
-## 4. Architektura aplikacji
+## 🛠️ Technologie
 
-Aplikacja została zorganizowana zgodnie z architekturą **warstwową (DDD-inspired)**:
+### Frontend
+```json
+{
+  "next": "16.0.1",
+  "react": "19",
+  "typescript": "5.x",
+  "tailwindcss": "4.0.0-alpha.25",
+  "@fortawesome/fontawesome-free": "^6.7.1"
+}
+```
+
+### Backend
+```json
+{
+  "mysql2": "^3.11.5",
+  "bcryptjs": "^2.4.3",
+  "jsonwebtoken": "^9.0.2"
+}
+```
+
+### DevTools
+- **Turbopack** - ultra-fast bundler (dev mode)
+- **ESLint** - code linting
+- **Console Ninja** - advanced debugging
+
+---
+
+## 📦 Instalacja
+
+### 1️⃣ Wymagania Wstępne
+
+- **Node.js** 18+ i npm/yarn
+- **MySQL** 5.7+ lub **MariaDB** 10.3+
+- **Git**
+
+### 2️⃣ Klonowanie Repozytorium
+
+```bash
+git clone https://github.com/Wolowicz/biblioteka-web.git
+cd biblioteka-web
+```
+
+### 3️⃣ Instalacja Zależności
+
+```bash
+npm install
+# lub
+yarn install
+```
+
+### 4️⃣ Konfiguracja Bazy Danych
+
+**Utwórz bazę danych:**
+```sql
+CREATE DATABASE biblioteka CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+**Zaimportuj schemat:**
+```bash
+mysql -u root -p biblioteka < biblioteka14.12v2.sql
+```
+
+### 5️⃣ Zmienne Środowiskowe
+
+Utwórz plik `.env.local` w głównym katalogu:
+
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=twoje_haslo
+DB_NAME=biblioteka
+
+# JWT Secret (wygeneruj losowy string!)
+JWT_SECRET=super_bezpieczny_losowy_klucz_minimum_32_znaki
+
+# App URL
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+**🔒 WAŻNE:** Nigdy nie commituj `.env.local` do repozytorium!
+
+### 6️⃣ Uruchomienie Aplikacji
+
+**Development mode:**
+```bash
+npm run dev
+```
+Aplikacja dostępna na: **http://localhost:3000**
+
+**Production mode:**
+```bash
+npm run build
+npm start
+```
+
+---
+
+## 📁 Struktura Projektu
 
 ```
 biblioteka-web/
-│
-├── app/                        # Warstwa prezentacji (Next.js App Router)
-│   ├── page.tsx               # Strona główna (katalog/welcome)
-│   ├── layout.tsx             # Główny layout z metadanymi
-│   ├── globals.css            # Globalne style Tailwind
-│   │
-│   ├── welcome/               # Strona powitalna (login/register)
-│   │   └── page.tsx
-│   │
-│   ├── books/                 # Szczegóły książek
-│   │   └── [id]/page.tsx
-│   │
-│   ├── borrowings/            # Wypożyczenia użytkownika
+├── 📂 app/                          # Next.js App Router
+│   ├── 📂 _components/              # Komponenty współdzielone
+│   │   ├── AppShell.tsx             # Layout z nawigacją
+│   │   ├── BackButton.tsx           # Przycisk powrotu
+│   │   ├── ClientFilter.tsx         # Filtrowanie katalogu (client)
+│   │   ├── ReserveButton.tsx        # Rezerwacja książki
+│   │   ├── FavoriteButton.tsx       # Dodaj do ulubionych
+│   │   ├── BookActions.tsx          # Akcje na książce
+│   │   ├── BookRating.tsx           # Ocena książki (gwiazdki)
+│   │   ├── ReviewForm.tsx           # Formularz recenzji
+│   │   ├── ReviewsList.tsx          # Lista recenzji
+│   │   ├── 📂 catalog/
+│   │   │   └── CatalogContent.tsx   # Katalog książek
+│   │   └── 📂 ui/
+│   │       ├── Modal.tsx            # Komponent modal
+│   │       └── Toast.tsx            # Powiadomienia toast
+│   ├── 📂 admin/                    # Panel administratora
+│   │   ├── page.tsx                 # Strona główna admina
+│   │   └── AdminPanel.tsx           # Komponenty panelu
+│   ├── 📂 librarian/                # Panel bibliotekarza
+│   │   └── page.tsx                 # Obsługa wypożyczeń
+│   ├── 📂 profile/                  # Profil użytkownika
+│   │   └── page.tsx                 # Zakładki: Konto, Ulubione, Ustawienia
+│   ├── 📂 books/[id]/               # Szczegóły książki
+│   │   └── page.tsx                 # Dynamiczna strona książki
+│   ├── 📂 borrowings/               # Wypożyczenia
 │   │   ├── page.tsx
+│   │   ├── BorrowingsClient.tsx
 │   │   └── BorrowingsList.tsx
-│   │
-│   ├── admin/                 # Panel administracyjny
-│   │   └── AdminPanel.tsx
-│   │
-│   ├── _components/           # Współdzielone komponenty
-│   │   ├── AppShell.tsx       # Główny layout dla zalogowanych
-│   │   ├── ClientFilter.tsx   # Filtrowanie i katalog książek
-│   │   ├── BackButton.tsx     # Przycisk powrotu
-│   │   └── ReserveButton.tsx  # Przycisk rezerwacji
-│   │
-│   └── api/                   # Route Handlers (REST API)
-│       ├── auth/              # Autoryzacja
-│       │   ├── login/route.ts
-│       │   ├── logout/route.ts
-│       │   ├── register/route.ts
-│       │   └── session/route.ts
-│       ├── books/             # Książki
-│       │   ├── route.ts
-│       │   └── [id]/route.ts
-│       ├── borrowings/route.ts
-│       └── reservations/route.ts
-│
-├── domain/                    # Warstwa domenowa (OOP)
-│   ├── types/                 # Definicje typów TypeScript
-│   │   └── index.ts
-│   └── models/                # Klasy domenowe
-│       ├── User.ts
-│       ├── Book.ts
-│       └── Borrowing.ts
-│
-├── services/                  # Warstwa serwisów (API clients)
-│   ├── ApiService.ts          # Bazowa klasa HTTP
-│   ├── AuthService.ts         # Autoryzacja
-│   ├── BooksService.ts        # Książki
-│   └── BorrowingsService.ts   # Wypożyczenia
-│
-├── lib/                       # Warstwa infrastruktury
-│   ├── db.ts                  # Pula połączeń MySQL
-│   ├── auth/                  # Moduły autoryzacji
-│   │   ├── index.ts           # Client-side (useAuth hook)
-│   │   ├── server.ts          # Server-side (SSR)
-│   │   └── role-map.ts        # Mapowanie ról
-│   └── ui/
-│       └── theme.ts           # Motywy kolorystyczne (legacy)
-│
-├── styles/                    # Scentralizowane style
-│   └── index.ts               # Wszystkie style Tailwind
-│
-└── public/                    # Zasoby statyczne
-    └── biblio.png             # Domyślna okładka
+│   ├── 📂 welcome/                  # Logowanie/Rejestracja
+│   │   └── page.tsx
+│   ├── 📂 api/                      # API Routes (Backend)
+│   │   ├── 📂 auth/
+│   │   │   ├── login/route.ts       # POST /api/auth/login
+│   │   │   ├── register/route.ts    # POST /api/auth/register
+│   │   │   ├── logout/route.ts      # POST /api/auth/logout
+│   │   │   └── session/route.ts     # GET /api/auth/session
+│   │   ├── 📂 books/
+│   │   │   ├── route.ts             # GET/POST /api/books
+│   │   │   └── [id]/route.ts        # GET/PUT/DELETE /api/books/:id
+│   │   ├── 📂 borrowings/
+│   │   │   ├── route.ts             # GET /api/borrowings
+│   │   │   ├── create/route.ts      # POST /api/borrowings/create
+│   │   │   ├── return/route.ts      # POST /api/borrowings/return
+│   │   │   ├── check/route.ts       # GET /api/borrowings/check
+│   │   │   └── [id]/extend/route.ts # POST /api/borrowings/:id/extend
+│   │   ├── 📂 favorites/
+│   │   │   └── route.ts             # GET/POST/DELETE /api/favorites
+│   │   ├── 📂 reviews/
+│   │   │   └── route.ts             # GET/POST/DELETE /api/reviews
+│   │   ├── 📂 profile/
+│   │   │   └── route.ts             # GET/PUT /api/profile
+│   │   ├── 📂 admin/
+│   │   │   ├── stats/route.ts       # GET /api/admin/stats
+│   │   │   ├── users/route.ts       # GET /api/admin/users
+│   │   │   └── logs/route.ts        # GET /api/admin/logs
+│   │   └── 📂 notifications/
+│   │       └── route.ts             # GET /api/notifications
+│   ├── layout.tsx                   # Root layout
+│   ├── page.tsx                     # Strona główna (katalog)
+│   └── globals.css                  # Style globalne + animacje
+├── 📂 domain/                       # Domain Logic
+│   ├── 📂 models/                   # Modele danych
+│   │   ├── Book.ts
+│   │   ├── User.ts
+│   │   └── Borrowing.ts
+│   ├── 📂 types/                    # TypeScript types
+│   │   ├── index.ts
+│   │   └── database.ts
+│   └── types.ts                     # Główne interfejsy
+├── 📂 lib/                          # Utilities
+│   ├── 📂 auth/
+│   │   ├── index.ts                 # Client-side auth
+│   │   ├── server.ts                # SSR auth
+│   │   └── role-map.ts              # Role mapping
+│   ├── db.ts                        # MySQL connection pool
+│   └── 📂 ui/
+│       └── theme.ts                 # Theme config
+├── 📂 services/                     # Frontend API Services
+│   ├── ApiService.ts                # Base API service
+│   ├── AuthService.ts               # Auth operations
+│   ├── BooksService.ts              # Books CRUD
+│   └── BorrowingsService.ts         # Borrowings operations
+├── 📂 public/                       # Static files
+│   └── library-bg.jpg               # Background image
+├── 📂 migrations/                   # SQL migrations
+│   ├── 001_initial_schema.sql
+│   └── 002_gatunki_ulubione_okladka.sql
+├── biblioteka14.12v2.sql            # Pełny schemat bazy danych
+├── .env.local                       # Environment variables (not in repo)
+├── .gitignore
+├── next.config.ts                   # Next.js config
+├── tailwind.config.ts               # Tailwind config
+├── tsconfig.json                    # TypeScript config
+├── package.json
+└── README.md
 ```
 
 ---
 
-## 5. Zmiany wprowadzone w sesji (Changelog)
+## 🗄️ Schemat Bazy Danych
 
-### 🎨 UI/UX Redesign
+### Główne Tabele
 
-#### Strona powitalna (`app/welcome/page.tsx`)
-- Nowy layout dwukolumnowy (65%/35%)
-- Lewa strona: tło obrazkowe z tytułem "BiblioteQ"
-- Prawa strona: formularz logowania/rejestracji z przełącznikiem zakładek
-- Animacje hover i transition
+#### `Uzytkownicy` - Users
+```sql
+CREATE TABLE `Uzytkownicy` (
+  `UzytkownikId` INT PRIMARY KEY AUTO_INCREMENT,
+  `Imie` VARCHAR(50) NOT NULL,
+  `Nazwisko` VARCHAR(50) NOT NULL,
+  `Email` VARCHAR(100) UNIQUE NOT NULL,
+  `HashedPassword` VARCHAR(255) NOT NULL,
+  `Rola` ENUM('Czytelnik', 'Bibliotekarz', 'Administrator') DEFAULT 'Czytelnik',
+  `DataRejestracji` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `IsDeleted` TINYINT(1) DEFAULT 0
+);
+```
 
-#### Katalog książek (`app/_components/ClientFilter.tsx`)
-- Kategorie jako pill buttony
-- Pasek filtrów: wyszukiwarka, status, sortowanie
-- Przełącznik widoku grid/list
-- Karty książek z overlay przy hover
-- System ocen gwiazdkowych
-- Tagi kategorii
+#### `Ksiazki` - Books
+```sql
+CREATE TABLE `Ksiazki` (
+  `KsiazkaId` INT PRIMARY KEY AUTO_INCREMENT,
+  `Tytul` VARCHAR(300) NOT NULL,
+  `numerISBN` VARCHAR(20),
+  `Wydawnictwo` VARCHAR(200),
+  `Rok` INT,
+  `LiczbaEgzemplarzy` INT DEFAULT 0,
+  `DostepneEgzemplarze` INT DEFAULT 0,
+  `IsDeleted` TINYINT(1) DEFAULT 0
+);
+```
 
-#### Layout aplikacji (`app/_components/AppShell.tsx`)
-- Header z backdrop-blur
-- Nawigacja jako pills
-- Wyszukiwarka w headerze
-- Dzwonek powiadomień
-- Badge użytkownika z rolą
+#### `Autorzy` - Authors
+```sql
+CREATE TABLE `Autorzy` (
+  `AutorId` INT PRIMARY KEY AUTO_INCREMENT,
+  `ImieNazwisko` VARCHAR(100) NOT NULL
+);
+```
 
-#### Panel administracyjny (`app/admin/AdminPanel.tsx`)
-- Karty statystyk z ikonami
-- Sekcja szybkich akcji
-- Feed ostatnich aktywności
-- Sekcja kosza
+#### `Wypozyczenia` - Borrowings
+```sql
+CREATE TABLE `Wypozyczenia` (
+  `WypozyczenieId` INT PRIMARY KEY AUTO_INCREMENT,
+  `UzytkownikId` INT NOT NULL,
+  `KsiazkaId` INT NOT NULL,
+  `DataWypozyczenia` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `DataPlanowanegoZwrotu` DATE NOT NULL,
+  `DataZwrotu` DATE NULL,
+  `Status` ENUM('ACTIVE', 'RETURNED', 'OVERDUE') DEFAULT 'ACTIVE',
+  `LiczbaPrzedluzen` INT DEFAULT 0,
+  FOREIGN KEY (`UzytkownikId`) REFERENCES `Uzytkownicy`(`UzytkownikId`),
+  FOREIGN KEY (`KsiazkaId`) REFERENCES `Ksiazki`(`KsiazkaId`)
+);
+```
 
-#### Szczegóły książki (`app/books/[id]/page.tsx`)
-- Layout 12-kolumnowy (8+4)
-- Sticky sidebar z okładką
-- Box statusu dostępności
-- Sekcja recenzji
-- Naprawiono duplikację kodu
+#### `Rezerwacje` - Reservations
+```sql
+CREATE TABLE `Rezerwacje` (
+  `RezerwacjaId` INT PRIMARY KEY AUTO_INCREMENT,
+  `UzytkownikId` INT NOT NULL,
+  `KsiazkaId` INT NOT NULL,
+  `DataRezerwacji` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `Status` ENUM('ACTIVE', 'COMPLETED', 'CANCELLED') DEFAULT 'ACTIVE',
+  FOREIGN KEY (`UzytkownikId`) REFERENCES `Uzytkownicy`(`UzytkownikId`),
+  FOREIGN KEY (`KsiazkaId`) REFERENCES `Ksiazki`(`KsiazkaId`)
+);
+```
 
-#### Wypożyczenia (`app/borrowings/`)
-- Karty statystyk (wszystkie, aktywne, zwrócone, po terminie)
-- Zakładki filtrowania
-- Nowoczesne karty wypożyczeń z badge'ami statusu
+#### `gatunki` - Genres (nowa funkcjonalność)
+```sql
+CREATE TABLE `gatunki` (
+  `GatunekId` INT PRIMARY KEY AUTO_INCREMENT,
+  `Nazwa` VARCHAR(100) NOT NULL,
+  `Ikona` VARCHAR(50),
+  `Kolor` VARCHAR(100),
+  `IsDeleted` TINYINT(1) DEFAULT 0
+);
+```
 
-### 🏗️ Architektura
+#### `ulubione` - Favorites (nowa funkcjonalność)
+```sql
+CREATE TABLE `ulubione` (
+  `UlubioneId` INT PRIMARY KEY AUTO_INCREMENT,
+  `UzytkownikId` INT NOT NULL,
+  `KsiazkaId` INT NOT NULL,
+  `DataDodania` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`UzytkownikId`) REFERENCES `Uzytkownicy`(`UzytkownikId`),
+  FOREIGN KEY (`KsiazkaId`) REFERENCES `Ksiazki`(`KsiazkaId`)
+);
+```
 
-#### Warstwa domenowa (`domain/`)
-- Typy TypeScript (`domain/types/index.ts`)
-- Klasy OOP: `User`, `Book`, `Borrowing`
-- Logika biznesowa w modelach
+#### `recenzje` - Reviews (nowa funkcjonalność)
+```sql
+CREATE TABLE `recenzje` (
+  `RecenzjaId` INT PRIMARY KEY AUTO_INCREMENT,
+  `UzytkownikId` INT NOT NULL,
+  `KsiazkaId` INT NOT NULL,
+  `Ocena` TINYINT CHECK (`Ocena` BETWEEN 1 AND 5),
+  `Tresc` TEXT,
+  `DataDodania` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`UzytkownikId`) REFERENCES `Uzytkownicy`(`UzytkownikId`),
+  FOREIGN KEY (`KsiazkaId`) REFERENCES `Ksiazki`(`KsiazkaId`)
+);
+```
 
-#### Warstwa serwisów (`services/`)
-- `ApiService` - bazowa klasa HTTP z obsługą błędów
-- `AuthService` - logowanie, rejestracja, sesja
-- `BooksService` - CRUD książek + filtrowanie
-- `BorrowingsService` - wypożyczenia + rezerwacje
+### Relacje Many-to-Many
 
-#### Style (`styles/index.ts`)
-- Scentralizowane style Tailwind
-- Motywy według ról (ADMIN/LIBRARIAN/USER)
-- Style komponentów: przyciski, inputy, karty
-- Funkcje pomocnicze
-
-### 🔧 Bugfixy
-
-- Naprawiono duplikację kodu w `books/[id]/page.tsx`
-- Dodano brakującą funkcję `authLogin()` w `lib/auth/index.ts`
-- Poprawiono import typów w komponentach
-
-### 📚 Dokumentacja
-
-- Rozbudowane komentarze JSDoc we wszystkich plikach
-- Wyjaśnienia przepływu danych
-- Przykłady użycia
+- `KsiazkiAutorzy` - Książki ↔ Autorzy
+- `ksiazki_gatunki` - Książki ↔ Gatunki
 
 ---
 
-## 6. Uruchomienie projektu
+## 📡 API Documentation
 
-### Wymagania
-- Node.js 20+
-- MySQL 8+
-- npm lub yarn
+### 🔐 Authentication
 
-### Instalacja
+#### `POST /api/auth/register`
+Rejestracja nowego użytkownika
+```typescript
+// Request Body
+{
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
 
+// Response 200
+{
+  message: "Użytkownik zarejestrowany"
+}
+```
+
+#### `POST /api/auth/login`
+Logowanie użytkownika
+```typescript
+// Request Body
+{
+  email: string;
+  password: string;
+}
+
+// Response 200
+{
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: "READER" | "LIBRARIAN" | "ADMIN";
+  }
+}
+```
+
+#### `POST /api/auth/logout`
+Wylogowanie (usuwa cookie sesji)
+```typescript
+// Response 200
+{
+  message: "Wylogowano pomyślnie"
+}
+```
+
+#### `GET /api/auth/session`
+Sprawdzenie aktywnej sesji
+```typescript
+// Response 200
+{
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  }
+}
+```
+
+---
+
+### 📚 Books
+
+#### `GET /api/books`
+Lista wszystkich książek z filtrowaniem
+```typescript
+// Query Params
+?search=string       // Szukaj w tytule/autorze
+&available=boolean   // Tylko dostępne
+
+// Response 200
+{
+  books: [
+    {
+      id: number;
+      title: string;
+      authors: string;
+      isbn: string;
+      publisher: string;
+      year: number;
+      available: boolean;
+      genres: Array<{
+        id: number;
+        name: string;
+        icon: string;
+        color: string;
+      }>;
+    }
+  ]
+}
+```
+
+#### `GET /api/books/[id]`
+Szczegóły pojedynczej książki
+```typescript
+// Response 200
+{
+  id: number;
+  title: string;
+  authors: string;
+  isbn: string;
+  publisher: string;
+  year: number;
+  available: boolean;
+  genres: Array<Genre>;
+}
+```
+
+#### `POST /api/books` (ADMIN only)
+Dodanie nowej książki
+```typescript
+// Request Body
+{
+  title: string;
+  authors: string[];
+  isbn?: string;
+  publisher?: string;
+  year?: number;
+  copies: number;
+  genreIds?: number[];
+}
+```
+
+---
+
+### 📖 Borrowings
+
+#### `GET /api/borrowings`
+Lista wypożyczeń
+```typescript
+// Query Params
+?userId=number       // Filtruj po użytkowniku
+&status=string       // ACTIVE | RETURNED | OVERDUE
+&all=boolean         // Admin: wszystkie wypożyczenia
+
+// Response 200
+{
+  borrowings: [
+    {
+      id: number;
+      bookTitle: string;
+      borrowDate: string;
+      dueDate: string;
+      returnDate: string | null;
+      status: "ACTIVE" | "RETURNED" | "OVERDUE";
+      extensions: number;
+    }
+  ]
+}
+```
+
+#### `POST /api/borrowings/create`
+Wypożyczenie książki
+```typescript
+// Request Body
+{
+  bookId: number;
+  userId?: number;  // Admin może wypożyczyć dla innego użytkownika
+}
+
+// Response 200
+{
+  borrowingId: number;
+  dueDate: string;
+}
+```
+
+#### `POST /api/borrowings/return`
+Zwrot książki
+```typescript
+// Request Body
+{
+  borrowingId: number;
+}
+
+// Response 200
+{
+  message: "Książka zwrócona";
+  fine?: number;  // Opłata za przetrzymanie
+}
+```
+
+#### `POST /api/borrowings/[id]/extend`
+Przedłużenie wypożyczenia
+```typescript
+// Response 200
+{
+  newDueDate: string;
+  extensionsLeft: number;
+}
+```
+
+---
+
+### ⭐ Favorites
+
+#### `GET /api/favorites`
+Lista ulubionych książek użytkownika
+```typescript
+// Response 200
+{
+  favorites: Array<Book>;
+}
+```
+
+#### `POST /api/favorites`
+Dodaj do ulubionych
+```typescript
+// Request Body
+{
+  bookId: number;
+}
+```
+
+#### `DELETE /api/favorites?bookId=X`
+Usuń z ulubionych
+```typescript
+// Response 200
+{
+  message: "Usunięto z ulubionych"
+}
+```
+
+---
+
+### 📝 Reviews
+
+#### `GET /api/reviews?bookId=X`
+Recenzje książki
+```typescript
+// Response 200
+{
+  reviews: [
+    {
+      id: number;
+      userName: string;
+      rating: number;     // 1-5
+      content: string;
+      date: string;
+      canDelete: boolean; // true jeśli to recenzja użytkownika
+    }
+  ];
+  averageRating: number;
+  totalReviews: number;
+}
+```
+
+#### `POST /api/reviews`
+Dodaj recenzję
+```typescript
+// Request Body
+{
+  bookId: number;
+  rating: number;    // 1-5
+  content: string;
+}
+```
+
+#### `DELETE /api/reviews/[id]`
+Usuń recenzję (tylko własną)
+
+---
+
+### 👤 Profile
+
+#### `GET /api/profile`
+Dane profilu użytkownika
+```typescript
+// Response 200
+{
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  registrationDate: string;
+  stats: {
+    totalBorrowings: number;
+    activeBorrowings: number;
+    totalFines: number;
+  }
+}
+```
+
+#### `PUT /api/profile`
+Aktualizuj profil
+```typescript
+// Request Body
+{
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
+```
+
+---
+
+### 🛡️ Admin Endpoints
+
+#### `GET /api/admin/stats`
+Statystyki systemu
+```typescript
+// Response 200
+{
+  totalUsers: number;
+  totalBooks: number;
+  activeLoans: number;
+  overdueLoans: number;
+  totalFines: number;
+  topReaders: Array<{
+    name: string;
+    borrowings: number;
+  }>;
+  topBooks: Array<{
+    title: string;
+    borrowings: number;
+  }>;
+  borrowingsTrend: Array<{
+    date: string;
+    count: number;
+  }>;
+}
+```
+
+#### `GET /api/admin/users`
+Lista użytkowników
+```typescript
+// Query Params
+?role=string         // READER | LIBRARIAN | ADMIN
+&search=string       // Szukaj po imieniu/emailu
+
+// Response 200
+{
+  users: Array<{
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    activeBorrowings: number;
+  }>
+}
+```
+
+#### `GET /api/admin/logs`
+Logi systemowe (last 100)
+```typescript
+// Response 200
+{
+  logs: Array<{
+    timestamp: string;
+    action: string;
+    user: string;
+    details: string;
+  }>
+}
+```
+
+---
+
+## 🔒 Bezpieczeństwo
+
+### Authentication & Authorization
+- ✅ **Hasła**: bcrypt hashing z 10 rounds
+- ✅ **Sesje**: JWT tokens w HTTP-only cookies (7 dni ważności)
+- ✅ **RBAC**: Role-based access control (3 role)
+- ✅ **Session validation**: Sprawdzanie przy każdym zapytaniu API
+
+### Data Protection
+- ✅ **SQL Injection**: Prepared statements (mysql2)
+- ✅ **XSS Protection**: React auto-escaping + sanityzacja inputów
+- ✅ **CSRF**: SameSite cookies
+- ✅ **Soft Delete**: Dane nie są fizycznie usuwane (`IsDeleted` flag)
+
+### Password Requirements
+```typescript
+// Walidacja hasła przy rejestracji
+- Min. 8 znaków
+- Min. 1 wielka litera
+- Min. 1 mała litera
+- Min. 1 cyfra
+- Min. 1 znak specjalny
+```
+
+### Environment Variables
 ```bash
-# Klonowanie repozytorium
-git clone https://github.com/your-repo/biblioteq.git
-cd biblioteq
-
-# Instalacja zależności
-npm install
-
-# Konfiguracja bazy danych
-# Utwórz plik .env.local z parametrami:
-cp .env.example .env.local
-
-# Zmienne środowiskowe:
-# DB_HOST=localhost
-# DB_PORT=3306
-# DB_USER=root
-# DB_PASSWORD=twoje_haslo
-# DB_NAME=biblioteka
-
-# Import schematu bazy
-mysql -u root -p biblioteka < biblioteka.sql
-
-# Uruchomienie w trybie development
-npm run dev
+# NIGDY nie commituj .env.local do repo!
+# Zawiera wrażliwe dane: DB credentials, JWT secret
 ```
 
-Aplikacja będzie dostępna pod adresem: http://localhost:3000
+---
 
-### Konta testowe
+## 🐛 Troubleshooting
 
-| Email | Hasło | Rola |
-|-------|-------|------|
-| admin@admin.pl | Admin123! | Administrator |
-| bibliotekarz@biblioteka.pl | Bibl123! | Bibliotekarz |
-| czytelnik@biblioteka.pl | User123! | Czytelnik |
+### Problem: Port 3000 zajęty
+```bash
+# Aplikacja automatycznie przełączy się na port 3001
+# Lub zatrzymaj proces na porcie 3000:
+lsof -ti:3000 | xargs kill -9  # macOS/Linux
+netstat -ano | findstr :3000   # Windows (znajdź PID i kill)
+```
+
+### Problem: Błędy połączenia z bazą danych
+```bash
+# Sprawdź status MySQL
+systemctl status mysql        # Linux
+brew services list            # macOS (Homebrew)
+services.msc                  # Windows
+
+# Sprawdź credentials w .env.local
+# Sprawdź czy baza 'biblioteka' istnieje
+mysql -u root -p -e "SHOW DATABASES;"
+```
+
+### Problem: JSON_ARRAYAGG does not exist
+```sql
+-- Aplikacja automatycznie użyje GROUP_CONCAT jako fallback
+-- Aby naprawić, zaktualizuj MySQL do 5.7.22+
+SELECT VERSION();
+```
+
+### Problem: Cache/Build errors
+```bash
+# Wyczyść cache Next.js
+rm -rf .next
+npm run dev
+
+# Reinstalacja node_modules
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### Problem: Brak ikonek Font Awesome
+```bash
+# Sprawdź czy w layout.tsx jest:
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+```
+
+### Problem: 401 Unauthorized przy API calls
+```typescript
+// Sprawdź czy sesja jest aktywna:
+fetch('/api/auth/session').then(r => r.json()).then(console.log)
+
+// Jeśli null, wyloguj i zaloguj ponownie
+// Cookie mogło wygasnąć
+```
 
 ---
 
-## 7. Dalszy rozwój
+## 🚀 Deployment
 
-Planowane funkcjonalności:
-- [ ] Przedłużanie wypożyczeń
-- [ ] System powiadomień (email/in-app)
-- [ ] Płatności kar online
-- [ ] Import książek z API zewnętrznych (Google Books, OpenLibrary)
-- [ ] PWA (Progressive Web App)
-- [ ] Tryb ciemny
-- [ ] Testy jednostkowe i E2E
+### Vercel (Recommended)
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
+
+# Add environment variables in Vercel dashboard
+# Don't forget to set up MySQL connection (PlanetScale, Railway, etc.)
+```
+
+### Docker
+```dockerfile
+# Dockerfile (example)
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+```
 
 ---
 
-## 8. Licencja
+## 📈 Roadmap
 
-Projekt edukacyjny - część pracy magisterskiej.
+- [ ] **Google OAuth** - Logowanie przez Google
+- [ ] **E-booki** - Obsługa książek cyfrowych
+- [ ] **Powiadomienia email** - Przypomnienia o zwrotach
+- [ ] **Koszyk** - Wypożyczanie wielu książek naraz
+- [ ] **QR Codes** - Skanowanie książek
+- [ ] **Dark Mode** - Ciemny motyw
+- [ ] **PWA** - Progressive Web App
+- [ ] **Multi-language** - Obsługa języków (i18n)
 
 ---
 
-**Autor:** Student  
-**Uczelnia:** Studia magisterskie  
-**Data aktualizacji:** 2025
+## 🤝 Contributing
+
+Pull requesty są mile widziane! Dla większych zmian, otwórz najpierw Issue aby przedyskutować propozycje.
+
+### Development Workflow
+```bash
+# 1. Fork repo
+# 2. Create feature branch
+git checkout -b feature/AmazingFeature
+
+# 3. Commit changes
+git commit -m 'Add some AmazingFeature'
+
+# 4. Push to branch
+git push origin feature/AmazingFeature
+
+# 5. Open Pull Request
+```
+
+---
+
+## 📄 Licencja
+
+Ten projekt został stworzony na potrzeby **pracy magisterskiej**.
+
+---
+
+## 👨‍💻 Autor
+
+**Wolowicz** - [GitHub](https://github.com/Wolowicz)
+
+---
+
+## 📞 Kontakt
+
+W przypadku pytań lub problemów:
+- 🐛 **Issues**: [GitHub Issues](https://github.com/Wolowicz/biblioteka-web/issues)
+- 📧 **Email**: [kontakt przez GitHub]
+
+---
+
+## 🙏 Podziękowania
+
+- **Next.js Team** - za świetny framework
+- **Vercel** - za platformę deployment
+- **Tailwind CSS** - za utility-first CSS
+- **Font Awesome** - za ikony
+
+---
+
+## 📊 Status Projektu
+
+![Status](https://img.shields.io/badge/Status-Production-green)
+![Version](https://img.shields.io/badge/Version-1.0.0-blue)
+![Last Updated](https://img.shields.io/badge/Last%20Updated-Dec%202024-orange)
+
+**Wersja:** 1.0.0  
+**Data:** 14 grudnia 2024  
+**Status:** ✅ Gotowe do produkcji
+
+---
+
+<div align="center">
+  
+**Made with ❤️ using Next.js**
+
+[⬆ Back to Top](#-biblioteq---system-zarządzania-biblioteką)
+
+</div>

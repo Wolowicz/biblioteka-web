@@ -37,22 +37,23 @@ const ROLE_MAPPING: Record<string, UserRole> = {
   "ADMIN": "ADMIN",
   "ADMINISTRATOR": "ADMIN",
   "BIBLIOTEKARZ": "LIBRARIAN",
-  "CZYTELNIK": "USER",
+  "CZYTELNIK": "READER",
   
   // Angielskie nazwy
   "LIBRARIAN": "LIBRARIAN",
-  "USER": "USER",
+  "READER": "READER",
+  "USER": "READER",
   
   // Numeryczne ID (z tabeli Role w bazie)
   "1": "ADMIN",
   "2": "LIBRARIAN", 
-  "3": "USER",
+  "3": "READER",
 };
 
 /**
  * Domyślna rola przypisywana gdy nie można zmapować.
  */
-const DEFAULT_ROLE: UserRole = "USER";
+const DEFAULT_ROLE: UserRole = "READER";
 
 // =============================================================================
 // FUNKCJE MAPOWANIA
@@ -126,7 +127,7 @@ export function mapRoleFromDb(dbRole: string | number | null | undefined): UserR
 export function isValidUserRole(role: unknown): role is UserRole {
   return (
     typeof role === "string" &&
-    ["ADMIN", "LIBRARIAN", "USER"].includes(role)
+    ["ADMIN", "LIBRARIAN", "READER"].includes(role)
   );
 }
 
@@ -136,5 +137,5 @@ export function isValidUserRole(role: unknown): role is UserRole {
  * @returns Tablica wszystkich dozwolonych ról
  */
 export function getAllRoles(): UserRole[] {
-  return ["ADMIN", "LIBRARIAN", "USER"];
+  return ["ADMIN", "LIBRARIAN", "READER"];
 }

@@ -22,6 +22,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { ToastProvider } from "@/app/_components/ui/Toast";
 
 // =============================================================================
 // METADANE SEO
@@ -78,8 +79,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
         - bg-transparent: przezroczyste tło (nadpisywane przez motywy ról)
       */}
       <body className="min-h-screen antialiased bg-transparent">
-        {/* Główna zawartość strony */}
-        {children}
+        {/* Główna zawartość strony z ToastProvider */}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
         
         {/* 
           FontAwesome - biblioteka ikon

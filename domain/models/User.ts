@@ -83,8 +83,8 @@ export class User implements UserSession {
    * Sprawdza czy użytkownik jest zwykłym czytelnikiem.
    * Czytelnik może przeglądać katalog i wypożyczać książki.
    */
-  public isUser(): boolean {
-    return this.role === "USER";
+  public isReader(): boolean {
+    return this.role === "READER";
   }
 
   /**
@@ -100,7 +100,7 @@ export class User implements UserSession {
    * Tylko zwykli użytkownicy (czytelnicy) mogą wypożyczać.
    */
   public canBorrow(): boolean {
-    return this.isUser();
+    return this.isReader();
   }
 
   /**

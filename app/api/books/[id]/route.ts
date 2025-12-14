@@ -73,21 +73,31 @@ export async function GET(
 
   try {
     // === SEKCJA: Zapytanie do bazy danych ===
-    // Pobieramy szczegółowe dane książki z agregacją autorów
+    // Pobieramy szczegółowe dane książki z agregacją autorów i gatunków
     const [rows] = await pool.query(
       `
       SELECT
         k.KsiazkaId AS id,
         k.Tytul AS title,
-        COALESCE(GROUP_CONCAT(a.ImieNazwisko SEPARATOR ', '), 'Brak autora') AS authors,
+        NULL AS coverUrl,
+        COALESCE(GROUP_CONCAT(DISTINCT a.ImieNazwisko SEPARATOR ', '), 'Brak autora') AS authors,
         k.numerISBN AS isbn,
         k.Wydawnictwo AS publisher,
         k.Rok AS year,
-        (k.DostepneEgzemplarze > 0) AS available
+        (k.DostepneEgzemplarze > 0) AS available,
+        (
+          SELECT GROUP_CONCAT(
+            CONCAT(g.GatunekId, '|', g.Nazwa, '|', COALESCE(g.Ikona, 'fas fa-book'), '|', COALESCE(g.Kolor, 'from-indigo-500 to-purple-600'))
+            SEPARATOR ';;'
+          )
+          FROM ksiazki_gatunki kg
+          JOIN gatunki g ON g.GatunekId = kg.GatunekId
+          WHERE kg.KsiazkaId = k.KsiazkaId AND g.IsDeleted = 0
+        ) AS genresRaw
       FROM Ksiazki k
       LEFT JOIN KsiazkiAutorzy ka ON ka.KsiazkaId = k.KsiazkaId
       LEFT JOIN Autorzy a ON a.AutorId = ka.AutorId
-      WHERE k.KsiazkaId = ?
+      WHERE k.KsiazkaId = ? AND k.IsDeleted = 0
       GROUP BY
         k.KsiazkaId,
         k.Tytul,
@@ -107,8 +117,20 @@ export async function GET(
       return NextResponse.json({ error: "Nie znaleziono" }, { status: 404 });
     }
 
+    // Parsowanie gatunków z formatu "id|name|icon|color;;id|name|icon|color"
+    const book = list[0];
+    if (book.genresRaw) {
+      book.genres = book.genresRaw.split(';;').map((g: string) => {
+        const [id, name, icon, color] = g.split('|');
+        return { id: Number(id), name, icon, color };
+      });
+    } else {
+      book.genres = [];
+    }
+    delete book.genresRaw;
+
     // === SEKCJA: Odpowiedź sukcesu ===
-    return NextResponse.json(list[0]);
+    return NextResponse.json(book);
   } catch (err) {
     // === SEKCJA: Obsługa błędów ===
     console.error("DB error /api/books/[id]:", err);

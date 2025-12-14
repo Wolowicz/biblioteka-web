@@ -24,11 +24,11 @@
 
 /**
  * Dozwolone role użytkowników w systemie.
- * - USER (CZYTELNIK) - podstawowy użytkownik biblioteki
+ * - READER (CZYTELNIK) - podstawowy użytkownik biblioteki
  * - LIBRARIAN (BIBLIOTEKARZ) - pracownik z uprawnieniami do zarządzania
  * - ADMIN (ADMINISTRATOR) - pełne uprawnienia systemowe
  */
-export type UserRole = "USER" | "LIBRARIAN" | "ADMIN";
+export type UserRole = "READER" | "LIBRARIAN" | "ADMIN";
 
 /**
  * Sesja użytkownika przechowywana w cookie i używana w całej aplikacji.
@@ -96,6 +96,10 @@ export interface BookViewModel {
   available: boolean;
   /** URL okładki książki (opcjonalny) */
   coverUrl?: string;
+  /** Średnia ocena książki */
+  averageRating?: number;
+  /** Liczba recenzji */
+  reviewCount?: number;
 }
 
 /**
@@ -106,15 +110,19 @@ export interface BookDetails extends BookViewModel {
   /** Numer ISBN książki */
   isbn: string;
   /** Nazwa wydawnictwa */
-  publisher: string;
+  publisher?: string;
   /** Rok wydania */
-  year: number;
+  year?: number;
   /** Opis książki (opcjonalny) */
   description?: string;
   /** Kategoria/gatunek książki */
   category?: string;
   /** Liczba stron */
   pageCount?: number;
+  /** Liczba wszystkich egzemplarzy */
+  totalCopies?: number;
+  /** Liczba dostępnych egzemplarzy */
+  availableCopies?: number;
 }
 
 /**
@@ -162,6 +170,8 @@ export type BorrowingStatus =
 export interface BorrowingData {
   /** Unikalny identyfikator wypożyczenia */
   id: number;
+  /** ID książki */
+  bookId: number;
   /** Tytuł wypożyczonej książki */
   title: string;
   /** Autor książki */
@@ -174,6 +184,8 @@ export interface BorrowingData {
   dueDate: string;
   /** Data zwrotu (null jeśli nie zwrócono) */
   returnedDate: string | null;
+  /** Liczba przedłużeń */
+  extensionCount: number;
   /** Kwota kary (0 jeśli brak) */
   fine: number;
 }
@@ -344,7 +356,7 @@ export type ThemeKey = "admin" | "librarian" | "user";
 export const roleToThemeKey: Record<UserRole, ThemeKey> = {
   ADMIN: "admin",
   LIBRARIAN: "librarian",
-  USER: "user",
+  READER: "user",
 };
 
 /**
@@ -353,7 +365,7 @@ export const roleToThemeKey: Record<UserRole, ThemeKey> = {
 export const ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: "Administrator",
   LIBRARIAN: "Bibliotekarz",
-  USER: "Czytelnik",
+  READER: "Czytelnik",
 };
 
 /**
@@ -362,5 +374,5 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 export const ROLE_ICONS: Record<UserRole, string> = {
   ADMIN: "fas fa-user-shield",
   LIBRARIAN: "fas fa-book",
-  USER: "fas fa-user",
+  READER: "fas fa-user",
 };

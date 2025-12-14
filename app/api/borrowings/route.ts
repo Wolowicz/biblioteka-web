@@ -54,19 +54,21 @@
  * @packageDocumentation
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import pool from "@/lib/db";
+import { RowDataPacket } from "mysql2";
 
 /**
  * Handler GET - Pobieranie wypożyczeń użytkownika
  * 
- * Zwraca listę wszystkich wypożyczeń zalogowanego użytkownika
- * wraz z automatycznym naliczaniem kar za przeterminowane pozycje.
+ * Parametry query:
+ * - all=true: Pobierz wszystkie wypożyczenia (tylko LIBRARIAN/ADMIN)
+ * - status=ACTIVE|OVERDUE|RETURNED: Filtruj po statusie
  * 
  * @returns {Promise<NextResponse>} Odpowiedź JSON z listą wypożyczeń lub błędem
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     // === SEKCJA: Weryfikacja sesji użytkownika ===
     const cookieStore = await cookies();
@@ -78,6 +80,14 @@ export async function GET() {
 
     // Parsowanie danych użytkownika z ciasteczka sesyjnego
     const user = JSON.parse(session.value);
+    const { searchParams } = new URL(request.url);
+    const fetchAll = searchParams.get("all") === "true";
+    const statusFilter = searchParams.get("status");
+
+    // Jeśli bibliotekarz/admin chce wszystkie wypożyczenia
+    if (fetchAll && (user.role === "LIBRARIAN" || user.role === "ADMIN")) {
+      return await getAllBorrowings(statusFilter);
+    }
     const userId = Number(user.id);
 
     // === SEKCJA: Pobranie wypożyczeń użytkownika ===
@@ -157,6 +167,7 @@ export async function GET() {
       `
         SELECT
           w.WypozyczenieId AS id,
+          k.KsiazkaId AS bookId,
           k.Tytul AS title,
 
           (
@@ -173,11 +184,10 @@ export async function GET() {
           w.DataZwrotu AS returnedDate,
 
           COALESCE((
-            SELECT Kwota
+            SELECT SUM(Kwota)
             FROM kary
             WHERE WypozyczenieId = w.WypozyczenieId
               AND Status = 'Naliczona'
-            LIMIT 1
           ), 0) AS fine
 
         FROM wypozyczenia w
@@ -195,7 +205,7 @@ export async function GET() {
     const rows = result[0];
 
     // === SEKCJA: Odpowiedź sukcesu ===
-    return NextResponse.json(rows);
+    return NextResponse.json({ borrowings: rows });
 
   } catch (err) {
     // === SEKCJA: Obsługa błędów ===
@@ -204,5 +214,53 @@ export async function GET() {
       { error: "Server error", details: String(err) },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Pobiera wszystkie wypożyczenia (dla bibliotekarzy/adminów)
+ */
+async function getAllBorrowings(statusFilter: string | null) {
+  try {
+    let whereClause = "w.IsDeleted = 0";
+    
+    if (statusFilter === "ACTIVE") {
+      whereClause += " AND w.DataZwrotu IS NULL AND w.TerminZwrotu >= CURDATE()";
+    } else if (statusFilter === "OVERDUE") {
+      whereClause += " AND w.DataZwrotu IS NULL AND w.TerminZwrotu < CURDATE()";
+    } else if (statusFilter === "RETURNED") {
+      whereClause += " AND w.DataZwrotu IS NOT NULL";
+    }
+
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `
+      SELECT
+        w.WypozyczenieId AS id,
+        w.UzytkownikId AS userId,
+        CONCAT(u.Imie, ' ', u.Nazwisko) AS userName,
+        u.Email AS userEmail,
+        w.EgzemplarzId AS copyId,
+        e.NumerInwentarzowy AS copyNumber,
+        k.KsiazkaId AS bookId,
+        k.Tytul AS bookTitle,
+        w.DataWypozyczenia AS borrowDate,
+        w.TerminZwrotu AS dueDate,
+        w.DataZwrotu AS returnDate,
+        w.Status AS status,
+        COALESCE(w.IloscPrzedluzen, 0) AS extensions
+      FROM wypozyczenia w
+      JOIN uzytkownicy u ON w.UzytkownikId = u.UzytkownikId
+      JOIN egzemplarze e ON w.EgzemplarzId = e.EgzemplarzId
+      JOIN ksiazki k ON e.KsiazkaId = k.KsiazkaId
+      WHERE ${whereClause}
+      ORDER BY w.DataWypozyczenia DESC
+      LIMIT 500
+      `
+    );
+
+    return NextResponse.json({ borrowings: rows });
+  } catch (err) {
+    console.error("Błąd pobierania wszystkich wypożyczeń:", err);
+    return NextResponse.json({ error: "Błąd serwera" }, { status: 500 });
   }
 }
