@@ -21,6 +21,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Niezalogowany" }, { status: 401 });
     }
 
+    // Tylko LIBRARIAN i ADMIN mogą oddawać książki
+    if (user.role !== "ADMIN" && user.role !== "LIBRARIAN") {
+      return NextResponse.json({ 
+        error: "Brak uprawnień. Tylko bibliotekarz może przyjmować zwroty książek." 
+      }, { status: 403 });
+    }
+
     const { bookId } = await request.json();
 
     if (!bookId) {
@@ -30,23 +37,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Znajdź aktywne wypożyczenie użytkownika dla tej książki
-    const [borrowings] = await pool.query<RowDataPacket[]>(
-      `
-      SELECT w.WypozyczenieId, w.EgzemplarzId
-      FROM Wypozyczenia w
-      JOIN Egzemplarze e ON w.EgzemplarzId = e.EgzemplarzId
-      WHERE w.UzytkownikId = ?
-        AND e.KsiazkaId = ?
-        AND w.Status = 'Aktywne'
-      LIMIT 1
-      `,
-      [user.id, bookId]
-    );
+    // Znajdź aktywne wypożyczenie dla tej książki
+    // - Dla bibliotekarza/admina: sprawdź dowolne aktywne wypożyczenie tej książki
+    // - Dla zwykłego użytkownika: sprawdź wypożyczenie przypisane do niego
+    let borrowings;
+
+    if (user.role === "LIBRARIAN" || user.role === "ADMIN") {
+      const [rows] = await pool.query<RowDataPacket[]>(
+        `
+        SELECT w.WypozyczenieId, w.EgzemplarzId
+        FROM Wypozyczenia w
+        JOIN Egzemplarze e ON w.EgzemplarzId = e.EgzemplarzId
+        WHERE e.KsiazkaId = ?
+          AND w.Status = 'Aktywne'
+        ORDER BY w.DataWypozyczenia ASC
+        LIMIT 1
+        `,
+        [bookId]
+      );
+      borrowings = rows;
+    } else {
+      const [rows] = await pool.query<RowDataPacket[]>(
+        `
+        SELECT w.WypozyczenieId, w.EgzemplarzId
+        FROM Wypozyczenia w
+        JOIN Egzemplarze e ON w.EgzemplarzId = e.EgzemplarzId
+        WHERE w.UzytkownikId = ?
+          AND e.KsiazkaId = ?
+          AND w.Status = 'Aktywne'
+        LIMIT 1
+        `,
+        [user.id, bookId]
+      );
+      borrowings = rows;
+    }
 
     if (borrowings.length === 0) {
       return NextResponse.json(
-        { error: "Nie masz aktywnego wypożyczenia tej książki" },
+        { error: "Brak aktywnych wypożyczeń tej książki" },
         { status: 400 }
       );
     }

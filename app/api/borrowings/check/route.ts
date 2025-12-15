@@ -32,7 +32,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Sprawdź czy użytkownik ma aktywne wypożyczenie tej książki
+    // Jeśli bibliotekarz lub admin -> sprawdź czy istnieją aktywne wypożyczenia dla tej książki (dla dowolnego użytkownika)
+    const isStaff = user.role === "LIBRARIAN" || user.role === "ADMIN";
+
+    if (isStaff) {
+      const [rows] = await pool.query<RowDataPacket[]>(
+        `
+        SELECT 1
+        FROM Wypozyczenia w
+        JOIN Egzemplarze e ON w.EgzemplarzId = e.EgzemplarzId
+        WHERE e.KsiazkaId = ?
+          AND w.Status = 'Aktywne'
+        LIMIT 1
+        `,
+        [parseInt(bookId)]
+      );
+
+      return NextResponse.json({ hasBorrowed: rows.length > 0, staffView: true });
+    }
+
+    // Sprawdź czy zwykły użytkownik ma aktywne wypożyczenie tej książki
     const [borrowings] = await pool.query<RowDataPacket[]>(
       `
       SELECT 1
@@ -47,7 +66,8 @@ export async function GET(request: NextRequest) {
     );
 
     return NextResponse.json({
-      hasBorrowed: borrowings.length > 0
+      hasBorrowed: borrowings.length > 0,
+      staffView: false
     });
   } catch (error) {
     console.error("Błąd API GET /api/borrowings/check:", error);

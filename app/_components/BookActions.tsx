@@ -177,33 +177,40 @@ export default function BookActions({ bookId, available, variant = "full" }: Boo
         }
       </button>
 
-      {/* Przycisk Oddaj - widoczny tylko gdy ma wypożyczenie */}
-      <button
-        onClick={handleReturn}
-        disabled={!hasBorrowed || actionStatus === "loading"}
-        className={`
-          ${isCompact ? "flex-1 py-1.5 px-3" : "w-full py-3"} 
-          rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2
-          ${!hasBorrowed || actionStatus === "loading"
-            ? "bg-gray-300 cursor-not-allowed text-gray-500"
-            : "bg-emerald-600 hover:bg-emerald-500 text-white"
-          }
-        `}
-      >
-        {actionStatus === "loading" && actionType === "return" && (
-          <i className="fas fa-spinner fa-spin" aria-hidden="true"></i>
-        )}
-        {actionStatus === "success" && actionType === "return" && (
-          <i className="fas fa-check" aria-hidden="true"></i>
-        )}
-        <i className={`fas fa-undo ${actionStatus === "loading" && actionType === "return" ? "hidden" : ""}`} aria-hidden="true"></i>
-        {actionStatus === "loading" && actionType === "return"
-          ? "Oddaję..."
-          : actionStatus === "success" && actionType === "return"
-            ? "Oddano!"
-            : "Oddaj"
-        }
-      </button>
+      {/* Przycisk Oddaj - widoczny tylko dla personelu (LIBRARIAN/ADMIN) i jeśli istnieje aktywne wypożyczenie */}
+      {(() => {
+        const canReturnAsStaff = user?.role === "LIBRARIAN" || user?.role === "ADMIN";
+        if (!canReturnAsStaff) return null;
+
+        return (
+          <button
+            onClick={handleReturn}
+            disabled={!hasBorrowed || actionStatus === "loading"}
+            className={`
+              ${isCompact ? "flex-1 py-1.5 px-3" : "w-full py-3"} 
+              rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2
+              ${!hasBorrowed || actionStatus === "loading"
+                ? "bg-gray-300 cursor-not-allowed text-gray-500"
+                : "bg-emerald-600 hover:bg-emerald-500 text-white"
+              }
+            `}
+          >
+            {actionStatus === "loading" && actionType === "return" && (
+              <i className="fas fa-spinner fa-spin" aria-hidden="true"></i>
+            )}
+            {actionStatus === "success" && actionType === "return" && (
+              <i className="fas fa-check" aria-hidden="true"></i>
+            )}
+            <i className={`fas fa-undo ${actionStatus === "loading" && actionType === "return" ? "hidden" : ""}`} aria-hidden="true"></i>
+            {actionStatus === "loading" && actionType === "return"
+              ? "Oddaję..."
+              : actionStatus === "success" && actionType === "return"
+                ? "Oddano!"
+                : "Oddaj"
+            }
+          </button>
+        );
+      })()}
     </div>
   );
 }
