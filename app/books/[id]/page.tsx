@@ -78,18 +78,27 @@ export default async function BookDetailsPage({ params }: BookPageProps) {
         {/* LEWA KOLUMNA - OKŁADKA Z EFEKTAMI */}
         {/* ================================================================ */}
         <div className="lg:col-span-4">
-          <div className="sticky top-24">
+          <div className="sticky top-20 max-h-[calc(100vh-5rem)] overflow-auto">
             {/* Okładka z glow effect */}
             <div className="relative group">
               {/* Glow za okładką */}
               <div className={`absolute -inset-4 rounded-3xl blur-2xl opacity-50 transition-all duration-500 group-hover:opacity-80 ${book.available ? "bg-linear-to-br from-emerald-400 to-teal-400" : "bg-linear-to-br from-purple-400 to-pink-400"}`}></div>
               
-              <div className={`relative aspect-2/3 rounded-3xl overflow-hidden shadow-2xl ring-4 ${book.available ? "ring-emerald-400/30" : "ring-purple-400/30"} transition-transform duration-500 group-hover:scale-[1.02]`}>
-                <img
-                  src={book.coverUrl || "/biblio.png"}
-                  alt={`Okładka: ${book.title}`}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
+              <div className={`relative aspect-3/4 rounded-3xl overflow-hidden shadow-lg ring-2 max-h-[36vh] sm:max-h-[44vh] lg:max-h-[64vh] ${book.available ? "ring-emerald-400/20" : "ring-purple-400/20"} transition-transform duration-500 group-hover:scale-[1.01]`}>
+                {book.coverUrl ? (
+                  <img
+                    src={book.coverUrl}
+                    alt={`Okładka: ${book.title}`}
+                    className="w-full h-full object-cover transition-transform duration-700 sm:group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
+                    <div className="text-center">
+                      <i className="fas fa-book-open text-4xl mb-2" aria-hidden="true"></i>
+                      <p className="text-sm font-medium">Brak okładki</p>
+                    </div>
+                  </div>
+                )
                 
                 {/* Overlay gradient na hover */}
                 <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
