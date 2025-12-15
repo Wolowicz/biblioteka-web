@@ -77,58 +77,45 @@ export default async function BookDetailsPage({ params }: BookPageProps) {
         {/* ================================================================ */}
         {/* LEWA KOLUMNA - OKŁADKA Z EFEKTAMI */}
         {/* ================================================================ */}
-        <div className="lg:col-span-4">
-          <div className="sticky top-20 max-h-[calc(100vh-5rem)] overflow-auto">
+        <div className="lg:col-span-3">
+          <div className="sticky top-16 h-[calc(100vh-6rem)] flex flex-col justify-between">
             {/* Okładka z glow effect */}
-            <div className="relative group">
+            <div className="relative group flex-1 flex items-center justify-center">
               {/* Glow za okładką */}
-              <div className={`absolute -inset-4 rounded-3xl blur-2xl opacity-50 transition-all duration-500 group-hover:opacity-80 ${book.available ? "bg-linear-to-br from-emerald-400 to-teal-400" : "bg-linear-to-br from-purple-400 to-pink-400"}`}></div>
+              <div className={`absolute -inset-2 rounded-2xl blur-3xl opacity-30 transition-all duration-500 group-hover:opacity-70 ${book.available ? "bg-linear-to-br from-emerald-400 to-teal-400" : "bg-linear-to-br from-purple-400 to-pink-400"}`}></div>
               
-              <div className={`relative aspect-3/4 rounded-3xl overflow-hidden shadow-lg ring-2 max-h-[36vh] sm:max-h-[44vh] lg:max-h-[64vh] ${book.available ? "ring-emerald-400/20" : "ring-purple-400/20"} transition-transform duration-500 group-hover:scale-[1.01]`}>
+              <div className={`relative aspect-[2/3] rounded-2xl overflow-hidden shadow-md ring-1 max-h-[28vh] sm:max-h-[36vh] lg:max-h-[48vh] ${book.available ? "ring-emerald-400/15" : "ring-purple-400/15"} transition-transform duration-300 group-hover:scale-[1.01] w-[86%]`}>
                 {book.coverUrl ? (
                   <img
                     src={book.coverUrl}
                     alt={`Okładka: ${book.title}`}
-                    className="w-full h-full object-cover transition-transform duration-700 sm:group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-500 sm:group-hover:scale-103"
                   />
                 ) : (
                   <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
                     <div className="text-center">
-                      <i className="fas fa-book-open text-4xl mb-2" aria-hidden="true"></i>
+                      <i className="fas fa-book-open text-3xl mb-1" aria-hidden="true"></i>
                       <p className="text-sm font-medium">Brak okładki</p>
                     </div>
                   </div>
-                )
-                
-                {/* Overlay gradient na hover */}
-                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                )}
+
+                <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 
                 {/* Badge dostępności na okładce */}
-                <div className="absolute top-4 right-4">
-                  <div className={`px-4 py-2 rounded-full font-bold text-sm backdrop-blur-md shadow-xl flex items-center gap-2 ${book.available ? "bg-emerald-500/90 text-white" : "bg-rose-500/90 text-white"}`}>
-                    <span className="text-lg">{book.available ? "✨" : "⏳"}</span>
+                <div className="absolute top-3 right-3">
+                  <div className={`px-3 py-1.5 rounded-full font-bold text-xs backdrop-blur-md shadow-md flex items-center gap-2 ${book.available ? "bg-emerald-500/90 text-white" : "bg-rose-500/90 text-white"}`}>
+                    <span className="text-sm">{book.available ? "✨" : "⏳"}</span>
                     {book.available ? "Dostępna!" : "Wypożyczona"}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Przyciski akcji - młodzieżowe */}
-            <div className="mt-8 space-y-3">
-              <BookActions bookId={book.id} available={book.available} variant="full" />
-              
+            {/* Przyciski akcji - zwężone i dopasowane */}
+            <div className="mt-4 space-y-3 w-full">
+              <BookActions bookId={book.id} available={book.available} variant="compact" />
               <FavoriteButton bookId={book.id} isAdmin={isAdmin} />
-              
-              {/* Share button */}
-              <button className={`w-full py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02]
-                ${isAdmin 
-                  ? "bg-slate-800/50 text-slate-400 hover:text-white" 
-                  : "bg-white border border-gray-200 text-slate-500 hover:border-indigo-300 hover:text-indigo-600"
-                }
-              `}>
-                <i className="fas fa-share-alt" aria-hidden="true"></i>
-                Udostępnij znajomym
-              </button>
             </div>
           </div>
         </div>
