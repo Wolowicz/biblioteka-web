@@ -32,7 +32,7 @@ Nowoczesny, responsywny system zarządzania biblioteką zbudowany w technologii 
 - ⭐ **Ulubione** - zapisywanie ulubionych książek
 - 🔍 **Wyszukiwanie** - po tytule, autorze, ISBN, gatunku
 - 📋 **Rezerwacje** - rezerwacja dostępnych książek online
-- 📚 **Wypożyczenia** - zarządzanie aktywnymi i historycznymi wypożyczeniami
+- 📚 **Wypożyczenia** - przegląd aktywnych i historycznych wypożyczeń (uwaga: zwroty przyjmowane przez bibliotekarza w panelu)
 - 📅 **Przedłużenia** - przedłużanie terminu zwrotu (max 2x)
 - 💰 **Opłaty** - podgląd kar za przetrzymanie
 - 📝 **Recenzje** - ocenianie i recenzowanie książek (1-5 ⭐)
