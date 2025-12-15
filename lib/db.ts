@@ -143,6 +143,20 @@ const poolConfig: mysql.PoolOptions = {
 const pool = mysql.createPool(poolConfig);
 
 /**
+ * Testuje połączenie z bazą danych – próbuje pobrać połączenie i je zwolnić.
+ * Zwraca obiekt z informacją czy połączenie jest dostępne oraz ewentualnym błędem.
+ */
+export async function testConnection() {
+  try {
+    const conn = await pool.getConnection();
+    conn.release();
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || String(err) };
+  }
+}
+
+/**
  * Eksportujemy pulę jako domyślny eksport.
  * 
  * Użycie:

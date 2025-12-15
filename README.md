@@ -802,15 +802,38 @@ netstat -ano | findstr :3000   # Windows (znajdź PID i kill)
 ```
 
 ### Problem: Błędy połączenia z bazą danych
-```bash
-# Sprawdź status MySQL
+```
+# Symptom: `connect ECONNREFUSED 127.0.0.1:3306` lub podobny
+# Przyczyny:
+# - Serwer MySQL nie jest uruchomiony
+# - Złe dane w `.env.local` (DB_HOST/DB_PORT/DB_USER/DB_PASSWORD/DB_NAME)
+# - Firewall lub inna usługa blokuje port 3306
+
+# 1) Sprawdź czy MySQL działa
 systemctl status mysql        # Linux
 brew services list            # macOS (Homebrew)
-services.msc                  # Windows
+services.msc                  # Windows Services GUI
 
-# Sprawdź credentials w .env.local
-# Sprawdź czy baza 'biblioteka' istnieje
-mysql -u root -p -e "SHOW DATABASES;"
+# 2) Sprawdź połączenie z terminala
+mysql -h $DB_HOST -P $DB_PORT -u $DB_USER -p
+# Jeśli połączenie się nie udaje → sprawdź logi serwera MySQL
+
+# 3) Szybkie uruchomienie lokalnego MySQL (Docker)
+# Jeśli nie chcesz instalować MySQL lokalnie, możesz uruchomić kontener:
+
+docker run --name biblioteka-db -e MYSQL_ROOT_PASSWORD=secret -e MYSQL_DATABASE=biblioteka -p 3306:3306 -d mysql:5.7
+
+# 4) Sprawdź zmienne w `.env.local` (przykład)
+# DB_HOST=localhost
+# DB_PORT=3306
+# DB_USER=root
+# DB_PASSWORD=secret
+# DB_NAME=biblioteka
+
+# 5) Endpoint zdrowia
+# Aplikacja wystawia GET /api/health  — sprawdza dostępność bazy
+curl http://localhost:3000/api/health
+# Oczekiwany rezultat: {"ok":true,"db":{"ok":true}}
 ```
 
 ### Problem: JSON_ARRAYAGG does not exist

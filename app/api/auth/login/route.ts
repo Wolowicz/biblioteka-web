@@ -83,23 +83,35 @@ export async function POST(req: NextRequest) {
     // 2. WYSZUKANIE UŻYTKOWNIKA W BAZIE DANYCH
     // -------------------------------------------------------------------------
     
-    const [rows] = await pool.query(
-      `
-        SELECT 
-          u.UzytkownikId AS Id,
-          u.Imie,
-          u.Nazwisko,
-          u.Email,
-          u.HasloHash,
-          r.NazwaRoli AS Rola
-        FROM uzytkownicy u
-        JOIN role r ON u.RolaId = r.RolaId
-        WHERE u.Email = ?
-          AND u.IsDeleted = 0
-          AND u.Aktywny = 1
-      `,
-      [email]
-    );
+    // Spróbuj pobrać użytkownika z DB i obsłuż błędy połączenia oddzielnie
+    let rows: any[] = [];
+    try {
+      const result = await pool.query(
+        `
+          SELECT 
+            u.UzytkownikId AS Id,
+            u.Imie,
+            u.Nazwisko,
+            u.Email,
+            u.HasloHash,
+            r.NazwaRoli AS Rola
+          FROM uzytkownicy u
+          JOIN role r ON u.RolaId = r.RolaId
+          WHERE u.Email = ?
+            AND u.IsDeleted = 0
+            AND u.Aktywny = 1
+        `,
+        [email]
+      );
+      rows = (result as any)[0];
+    } catch (dbErr: any) {
+      console.error("Login DB error:", dbErr);
+      // Jeśli to błąd połączenia, zwróć 503 z jasnym komunikatem
+      if (dbErr?.code === "ECONNREFUSED" || dbErr?.errno === -4078) {
+        return NextResponse.json({ error: "Błąd połączenia z bazą danych. Sprawdź czy MySQL jest uruchomiony." }, { status: 503 });
+      }
+      return NextResponse.json({ error: "Błąd serwera przy komunikacji z bazą danych" }, { status: 500 });
+    }
 
     const users = rows as any[];
 
@@ -163,12 +175,16 @@ export async function POST(req: NextRequest) {
       maxAge: sessionMaxAge,
     });
 
-    // Log logowania
-    await pool.query(
-      `INSERT INTO logi (TypCoSieStalo, UzytkownikId, Opis, Encja, EncjaId)
-       VALUES ('Bezpieczenstwo', ?, ?, 'Uzytkownicy', ?)`,
-      [user.Id, `Zalogowano${rememberMe ? ' (zapamiętaj mnie)' : ''}`, user.Id]
-    );
+    // Log logowania - nie przerywamy procesu logowania jeżeli zapis do logów się nie powiedzie
+    try {
+      await pool.query(
+        `INSERT INTO logi (TypCoSieStalo, UzytkownikId, Opis, Encja, EncjaId)
+         VALUES ('Bezpieczenstwo', ?, ?, 'Uzytkownicy', ?)`,
+        [user.Id, `Zalogowano${rememberMe ? ' (zapamiętaj mnie)' : ''}`, user.Id]
+      );
+    } catch (logErr) {
+      console.warn("Nie udało się zapisać logu logowania:", logErr);
+    }
 
     // Zwróć dane sesji (bez hasła)
     return NextResponse.json(session, { status: 200 });
