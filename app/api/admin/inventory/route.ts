@@ -59,10 +59,12 @@ export async function GET(request: Request) {
         k.numerISBN AS ISBN,
         k.Rok AS RokWydania,
         k.Wydawnictwo,
+        k.Opis AS description,
+        k.LiczbaStron AS pageCount,
         GROUP_CONCAT(DISTINCT g.Nazwa ORDER BY g.Nazwa SEPARATOR ', ') AS NazwaGatunku,
         GROUP_CONCAT(DISTINCT kg.GatunekId ORDER BY kg.GatunekId SEPARATOR ',') AS NazwaGatunekIds,
         COALESCE((SELECT COUNT(*) FROM ebooki ex WHERE ex.KsiazkaId = k.KsiazkaId AND ex.IsDeleted = 0), 0) AS ebookCount,
-        NULL AS coverUrl, -- column OkladkaUrl may not exist in DB yet (apply migration 003_add_okladka.sql to enable)
+        k.OkladkaUrl AS coverUrl,
         COUNT(DISTINCT e.EgzemplarzId) AS totalCopies,
         COUNT(DISTINCT CASE WHEN e.Status = 'Dostepny' THEN e.EgzemplarzId END) AS availableCopies,
         COUNT(DISTINCT CASE WHEN e.Status = 'Wypozyczony' THEN e.EgzemplarzId END) AS borrowedCopies,

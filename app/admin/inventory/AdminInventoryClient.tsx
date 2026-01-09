@@ -15,6 +15,8 @@ interface Book {
   gatunekIds?: number[];
   ebookCount: number;
   coverUrl?: string | null;
+  description?: string | null;
+  pageCount?: number | null;
   totalCopies: number;
   availableCopies: number;
   borrowedCopies: number;
@@ -59,6 +61,10 @@ export default function AdminInventoryClient({ user }: { user: UserSession }) {
   // Form states
   const [newCopyBarcode, setNewCopyBarcode] = useState("");
   const [newCopyCondition, setNewCopyCondition] = useState("Dobry");
+  const [newEbookUrl, setNewEbookUrl] = useState("");
+  const [addingEbook, setAddingEbook] = useState(false);
+  const [savingBook, setSavingBook] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     fetchGenres();
@@ -123,7 +129,26 @@ export default function AdminInventoryClient({ user }: { user: UserSession }) {
   }
 
   async function handleUpdateBook() {
-    if (!editBookModal) return;
+    if (!editBookModal || savingBook) return;
+
+    // --- Client-side validation ---
+    const errors: { [key: string]: string } = {};
+    if (!editBookModal.Tytul || !editBookModal.Tytul.trim()) {
+      errors.Tytul = 'Tytuł jest wymagany';
+    }
+    if (editBookModal.pageCount !== undefined && editBookModal.pageCount !== null) {
+      if (!Number.isFinite(editBookModal.pageCount) || editBookModal.pageCount <= 0) {
+        errors.pageCount = 'Podaj poprawną liczbę stron';
+      }
+    }
+
+    if (Object.keys(errors).length) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setFormErrors({});
+    setSavingBook(true);
 
     try {
       const body: any = {
@@ -131,9 +156,13 @@ export default function AdminInventoryClient({ user }: { user: UserSession }) {
         isbn: editBookModal.ISBN,
         year: editBookModal.RokWydania,
         publisher: editBookModal.Wydawnictwo,
-        coverUrl: editBookModal.coverUrl || null,
       };
       if (editBookModal.gatunekIds) body.genreIds = editBookModal.gatunekIds;
+      // Send coverUrl only when defined (server expects a string to update)
+      if (editBookModal.coverUrl !== undefined) body.coverUrl = editBookModal.coverUrl ?? '';
+      // Send description and pageCount
+      if (editBookModal.description !== undefined) body.description = editBookModal.description ?? '';
+      if (editBookModal.pageCount !== undefined) body.pageCount = editBookModal.pageCount || null;
 
       const response = await fetch(`/api/books/${editBookModal.KsiazkaId}`, {
         method: "PATCH",
@@ -151,6 +180,40 @@ export default function AdminInventoryClient({ user }: { user: UserSession }) {
     } catch (error) {
       console.error("Błąd aktualizacji książki:", error);
       alert("Wystąpił błąd podczas aktualizacji");
+    } finally {
+      setSavingBook(false);
+    }
+  }
+
+  async function addEbook() {
+    if (!editBookModal) return;
+    if (!newEbookUrl.trim()) { alert('Podaj URL e-booka'); return; }
+    try {
+      setAddingEbook(true);
+      const response = await fetch('/api/ebooks', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `${editBookModal.Tytul} (e-book)`,
+          filePath: newEbookUrl.trim(),
+          format: 'PDF',
+          bookId: editBookModal.KsiazkaId,
+          accessLevel: 'Czytelnik'
+        })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setNewEbookUrl('');
+        fetchBooks();
+        alert('E-book dodany');
+      } else {
+        alert(data.error || 'Błąd dodawania e-booka');
+      }
+    } catch (err) {
+      console.error('Błąd dodawania e-booka:', err);
+      alert('Wystąpił błąd podczas dodawania e-booka');
+    } finally {
+      setAddingEbook(false);
     }
   }
 
@@ -509,118 +572,295 @@ export default function AdminInventoryClient({ user }: { user: UserSession }) {
       {/* Modal - Edit Book */}
       {editBookModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#141414] rounded-2xl border border-white/10 max-w-2xl w-full p-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Edytuj książkę</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Tytuł</label>
-                <input
-                  type="text"
-                  value={editBookModal.Tytul}
-                  onChange={(e) => setEditBookModal({ ...editBookModal, Tytul: e.target.value })}
-                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Autor</label>
-                <input
-                  type="text"
-                  value={editBookModal.Autor}
-                  onChange={(e) => setEditBookModal({ ...editBookModal, Autor: e.target.value })}
-                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">ISBN</label>
-                  <input
-                    type="text"
-                    value={editBookModal.ISBN}
-                    onChange={(e) => setEditBookModal({ ...editBookModal, ISBN: e.target.value })}
-                    className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">Rok wydania</label>
-                  <input
-                    type="number"
-                    value={editBookModal.RokWydania}
-                    onChange={(e) => setEditBookModal({ ...editBookModal, RokWydania: parseInt(e.target.value) })}
-                    className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Okładka (URL)</label>
-                <input
-                  type="text"
-                  value={editBookModal.coverUrl || ""}
-                  onChange={(e) => setEditBookModal({ ...editBookModal, coverUrl: e.target.value })}
-                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Gatunki</label>
-                <select
-                  multiple
-                  value={editBookModal.gatunekIds?.map(String) || []}
-                  onChange={(e) => {
-                    const opts = Array.from(e.target.selectedOptions).map((o) => parseInt(o.value));
-                    setEditBookModal({ ...editBookModal, gatunekIds: opts });
-                  }}
-                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500 h-32"
-                >
-                  {genres.map((g) => (
-                    <option key={g.id} value={g.id}>{g.name}</option>
-                  ))}
-                </select>
-              </div>
-
+          <div className="bg-[#141414] rounded-2xl border border-white/10 max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-white/10">
               <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-purple-500 to-blue-600 flex items-center justify-center">
+                  <i className="fas fa-book text-white text-lg"></i>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">E-booki</label>
-                  <div className="px-4 py-2 bg-gray-800/30 rounded text-gray-300">{editBookModal.ebookCount || 0} e-booków</div>
+                  <h2 className="text-xl font-bold text-white">Edytuj książkę</h2>
+                  <p className="text-sm text-gray-400">ID: {editBookModal.KsiazkaId}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditBookModal(null)}
+                className="w-10 h-10 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Left Column - Cover & Stats */}
+                <div className="lg:col-span-1 space-y-4">
+                  {/* Cover Preview */}
+                  <div className="bg-[#0A0A0A] rounded-xl border border-white/10 p-4">
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Okładka</label>
+                    <div className="aspect-2/3 rounded-lg overflow-hidden bg-slate-800 border border-white/5 flex items-center justify-center mb-3">
+                      {editBookModal.coverUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={editBookModal.coverUrl}
+                          alt="Podgląd okładki"
+                          onError={(e: any) => (e.currentTarget.src = '/biblio.png')}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-center text-gray-500">
+                          <i className="fas fa-image text-4xl mb-2"></i>
+                          <p className="text-xs">Brak okładki</p>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={editBookModal.coverUrl || ""}
+                      onChange={(e) => setEditBookModal({ ...editBookModal, coverUrl: e.target.value })}
+                      placeholder="https://.../cover.jpg"
+                      className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditBookModal({ ...editBookModal, coverUrl: '' })}
+                        className="flex-1 text-xs px-2 py-1.5 bg-white/5 hover:bg-white/10 rounded text-gray-400"
+                      >
+                        <i className="fas fa-trash mr-1"></i> Usuń
+                      </button>
+                      {editBookModal.coverUrl && (
+                        <a
+                          href={editBookModal.coverUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 text-xs px-2 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/30 rounded text-indigo-300 text-center"
+                        >
+                          <i className="fas fa-external-link-alt mr-1"></i> Otwórz
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Stock Info */}
+                  <div className="bg-[#0A0A0A] rounded-xl border border-white/10 p-4">
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Stan magazynowy</label>
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="bg-[#1a1a1a] rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-white">{editBookModal.totalCopies}</div>
+                        <div className="text-xs text-gray-500">Wszystkich</div>
+                      </div>
+                      <div className="bg-emerald-500/10 rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-emerald-400">{editBookModal.availableCopies}</div>
+                        <div className="text-xs text-emerald-400/70">Dostępnych</div>
+                      </div>
+                      <div className="bg-amber-500/10 rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-amber-400">{editBookModal.borrowedCopies}</div>
+                        <div className="text-xs text-amber-400/70">Wypożyczonych</div>
+                      </div>
+                      <div className="bg-red-500/10 rounded-lg p-3 text-center">
+                        <div className="text-2xl font-bold text-red-400">{editBookModal.unavailableCopies}</div>
+                        <div className="text-xs text-red-400/70">Niedostępnych</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-400">Zmień ilość:</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => adjustStock(editBookModal.KsiazkaId, -1)}
+                          disabled={editBookModal.availableCopies <= 0}
+                          className="w-10 h-10 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        >
+                          <i className="fas fa-minus"></i>
+                        </button>
+                        <button
+                          onClick={() => adjustStock(editBookModal.KsiazkaId, 1)}
+                          className="w-10 h-10 rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-300 flex items-center justify-center"
+                        >
+                          <i className="fas fa-plus"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* E-books */}
+                  <div className="bg-[#0A0A0A] rounded-xl border border-white/10 p-4">
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">E-booki</label>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-2xl font-bold text-purple-400">{editBookModal.ebookCount || 0}</span>
+                      <span className="text-xs text-gray-500">plików PDF</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={newEbookUrl}
+                      onChange={(e) => setNewEbookUrl(e.target.value)}
+                      placeholder="https://.../book.pdf"
+                      className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-2"
+                    />
+                    <button
+                      onClick={addEbook}
+                      disabled={addingEbook || !newEbookUrl.trim()}
+                      className="w-full py-2 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {addingEbook ? <><i className="fas fa-spinner fa-spin mr-2"></i>Dodawanie...</> : <><i className="fas fa-plus mr-2"></i>Dodaj e-book</>}
+                    </button>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">Zmień liczbę egzemplarzy</label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => adjustStock(editBookModal.KsiazkaId, -1)}
-                      className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded"
-                    >-</button>
-                    <button
-                      onClick={() => adjustStock(editBookModal.KsiazkaId, 1)}
-                      className="px-3 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 rounded"
-                    >+</button>
+                {/* Right Column - Form Fields */}
+                <div className="lg:col-span-2 space-y-4">
+                  {/* Basic Info Section */}
+                  <div className="bg-[#0A0A0A] rounded-xl border border-white/10 p-4">
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-4">Informacje podstawowe</label>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1.5">Tytuł <span className="text-red-400">*</span></label>
+                        <input
+                          type="text"
+                          value={editBookModal.Tytul}
+                          onChange={(e) => setEditBookModal({ ...editBookModal, Tytul: e.target.value })}
+                          className={`w-full bg-[#1a1a1a] border ${formErrors.Tytul ? 'border-red-500' : 'border-white/10'} rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500`}
+                        />
+                        {formErrors.Tytul && <p className="text-xs text-red-400 mt-1">{formErrors.Tytul}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1.5">Autor</label>
+                        <input
+                          type="text"
+                          value={editBookModal.Autor}
+                          onChange={(e) => setEditBookModal({ ...editBookModal, Autor: e.target.value })}
+                          className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-1.5">ISBN</label>
+                          <input
+                            type="text"
+                            value={editBookModal.ISBN}
+                            onChange={(e) => setEditBookModal({ ...editBookModal, ISBN: e.target.value })}
+                            placeholder="978-..."
+                            className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-1.5">Rok wydania</label>
+                          <input
+                            type="number"
+                            value={editBookModal.RokWydania || ""}
+                            onChange={(e) => setEditBookModal({ ...editBookModal, RokWydania: parseInt(e.target.value) || 0 })}
+                            placeholder="np. 2024"
+                            className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-1.5">Wydawnictwo</label>
+                          <input
+                            type="text"
+                            value={editBookModal.Wydawnictwo || ""}
+                            onChange={(e) => setEditBookModal({ ...editBookModal, Wydawnictwo: e.target.value })}
+                            className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-1.5">Liczba stron</label>
+                          <input
+                            type="number"
+                            value={editBookModal.pageCount || ""}
+                            onChange={(e) => setEditBookModal({ ...editBookModal, pageCount: e.target.value ? parseInt(e.target.value) : null })}
+                            placeholder="np. 288"
+                            className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-purple-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Genres Section */}
+                  <div className="bg-[#0A0A0A] rounded-xl border border-white/10 p-4">
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Gatunki</label>
+                    <div className="flex flex-wrap gap-2">
+                      {genres.map((g) => {
+                        const isSelected = editBookModal.gatunekIds?.includes(g.id);
+                        return (
+                          <button
+                            key={g.id}
+                            type="button"
+                            onClick={() => {
+                              const current = editBookModal.gatunekIds || [];
+                              const updated = isSelected 
+                                ? current.filter(id => id !== g.id)
+                                : [...current, g.id];
+                              setEditBookModal({ ...editBookModal, gatunekIds: updated });
+                            }}
+                            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                              isSelected 
+                                ? 'bg-purple-500 text-white' 
+                                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                            }`}
+                          >
+                            {isSelected && <i className="fas fa-check mr-1.5 text-xs"></i>}
+                            {g.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Description Section */}
+                  <div className="bg-[#0A0A0A] rounded-xl border border-white/10 p-4">
+                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Opis książki</label>
+                    <textarea
+                      value={editBookModal.description || ""}
+                      onChange={(e) => setEditBookModal({ ...editBookModal, description: e.target.value })}
+                      placeholder="Opis fabuły, treści książki..."
+                      rows={4}
+                      className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 resize-none"
+                    />
+                    <div className="flex justify-between mt-2 text-xs text-gray-500">
+                      <span>{editBookModal.description?.length || 0} znaków</span>
+                      <span>Zalecane: 100-500 znaków</span>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Wydawnictwo</label>
-                <input
-                  type="text"
-                  value={editBookModal.Wydawnictwo}
-                  onChange={(e) => setEditBookModal({ ...editBookModal, Wydawnictwo: e.target.value })}
-                  className="w-full bg-[#0A0A0A] border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
-                />
-              </div>
             </div>
-            <div className="flex gap-4 mt-6">
-              <button
-                onClick={handleUpdateBook}
-                className="flex-1 bg-linear-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-all"
-              >
-                Zapisz zmiany
-              </button>
-              <button
-                onClick={() => setEditBookModal(null)}
-                className="flex-1 bg-white/5 hover:bg-white/10 text-white font-medium py-2 px-4 rounded-lg transition-all"
-              >
-                Anuluj
-              </button>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-6 py-4 border-t border-white/10 bg-[#0A0A0A]">
+              <p className="text-xs text-gray-500">
+                <i className="fas fa-info-circle mr-1"></i>
+                Zmiany zostaną zapisane natychmiast
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setEditBookModal(null)}
+                  disabled={savingBook}
+                  className="px-6 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-medium transition-all disabled:opacity-50"
+                >
+                  Anuluj
+                </button>
+                <button
+                  onClick={handleUpdateBook}
+                  disabled={savingBook}
+                  className="px-6 py-2.5 rounded-lg bg-linear-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium transition-all disabled:opacity-70 flex items-center gap-2"
+                >
+                  {savingBook ? (
+                    <><i className="fas fa-spinner fa-spin"></i> Zapisywanie...</>
+                  ) : (
+                    <><i className="fas fa-save"></i> Zapisz zmiany</>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

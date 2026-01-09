@@ -80,7 +80,9 @@ export async function GET(
       SELECT
         k.KsiazkaId AS id,
         k.Tytul AS title,
-        NULL AS coverUrl,
+        k.OkladkaUrl AS coverUrl,
+        k.Opis AS description,
+        k.LiczbaStron AS pageCount,
         COALESCE(GROUP_CONCAT(DISTINCT a.ImieNazwisko SEPARATOR ', '), 'Brak autora') AS authors,
         k.numerISBN AS isbn,
         k.Wydawnictwo AS publisher,
@@ -102,6 +104,9 @@ export async function GET(
       GROUP BY
         k.KsiazkaId,
         k.Tytul,
+        k.OkladkaUrl,
+        k.Opis,
+        k.LiczbaStron,
         k.numerISBN,
         k.Wydawnictwo,
         k.Rok,
@@ -155,7 +160,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     if (!Number.isFinite(bookId)) return NextResponse.json({ error: 'Złe ID' }, { status: 400 });
 
     const body = await request.json();
-    const { title, isbn, publisher, year } = body;
+    const { title, isbn, publisher, year, description, pageCount } = body;
 
     const updates: string[] = [];
     const params: any[] = [];
@@ -163,6 +168,8 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     if (isbn !== undefined) { updates.push('numerISBN = ?'); params.push(isbn); }
     if (publisher !== undefined) { updates.push('Wydawnictwo = ?'); params.push(publisher); }
     if (year !== undefined) { updates.push('Rok = ?'); params.push(year); }
+    if (description !== undefined) { updates.push('Opis = ?'); params.push(description || null); }
+    if (pageCount !== undefined) { updates.push('LiczbaStron = ?'); params.push(pageCount || null); }
 
     if (updates.length === 0 && (!body.genreIds && body.genreIds !== undefined) && body.coverUrl === undefined) return NextResponse.json({ error: 'Brak danych do aktualizacji' }, { status: 400 });
 

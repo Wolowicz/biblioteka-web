@@ -89,7 +89,12 @@ export default function WelcomePage() {
       }
 
       setSuccess("Pomyślnie zalogowano!");
-      setTimeout(() => router.push("/"), 800);
+      // Przekieruj natychmiast na stronę odpowiednią dla roli
+      setTimeout(() => {
+        if (data?.role === "ADMIN") router.push("/admin/dashboard");
+        else if (data?.role === "LIBRARIAN") router.push("/librarian");
+        else router.push("/");
+      }, 800);
     } finally {
       setLoading(false);
     }

@@ -22,11 +22,16 @@ export default async function AdminUsersPage() {
   const user = await getUserSessionSSR();
   
   if (!user) {
-    redirect("/api/auth/login");
+    redirect("/welcome");
+  }
+
+  // LIBRARIAN ma swój własny panel
+  if (user.role === "LIBRARIAN") {
+    redirect("/librarian");
   }
 
   if (user.role !== "ADMIN") {
-    redirect("/admin/dashboard");
+    redirect("/");
   }
 
   return <AdminUsersClient user={user} />;

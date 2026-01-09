@@ -68,8 +68,84 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    // Budowanie zapytania
-    let query = `
+    // Budowanie zapytania (bardziej elastyczne: obsługuje `status` i `count`)
+    const statusParam = searchParams.get("status"); // pending | approved | rejected | reported
+    const countOnly = searchParams.get("count") === "true";
+
+    // Podstawowa klauzula FROM/WHERE
+    let fromWhere = `
+      FROM recenzje r
+      JOIN ksiazki k ON r.KsiazkaId = k.KsiazkaId
+      JOIN uzytkownicy u ON r.UzytkownikId = u.UzytkownikId
+      WHERE r.IsDeleted = 0
+    `;
+
+    const params: any[] = [];
+
+    // Filtr po użytkowniku (moje recenzje)
+    if (showMy && user) {
+      fromWhere += ` AND r.UzytkownikId = ?`;
+      params.push(user.id);
+    }
+
+    // Filtr po książce
+    if (bookId) {
+      fromWhere += ` AND r.KsiazkaId = ?`;
+      params.push(parseInt(bookId));
+    }
+
+    // Obsługa parametru status (wspieramy zarówno angielski jak i polski)
+    if (statusParam) {
+      const s = statusParam.toLowerCase();
+      // Mapowanie wejściowych wartości na wartości w DB / specjalne znaczniki
+      // 'reported' oznacza filtr po r.Zgloszona = 1
+      const statusMap: Record<string, string> = {
+        pending: 'Oczekuje',
+        oczekuje: 'Oczekuje',
+        approved: 'Zatwierdzona',
+        zaakceptowana: 'Zatwierdzona',
+        rejected: 'Odrzucona',
+        odrzucona: 'Odrzucona',
+        reported: 'REPORTED',
+        zgloszona: 'REPORTED',
+        zgloszone: 'REPORTED'
+      };
+
+      if (!statusMap[s]) {
+        return NextResponse.json({ error: "Nieznany parametr status" }, { status: 400 });
+      }
+
+      const mapped = statusMap[s];
+
+      if (mapped === 'REPORTED') {
+        if (!isStaff) return NextResponse.json({ error: "Brak uprawnień" }, { status: 403 });
+        fromWhere += ` AND r.Zgloszona = 1`;
+      } else if (mapped === 'Oczekuje') {
+        if (!isStaff) return NextResponse.json({ error: "Brak uprawnień" }, { status: 403 });
+        fromWhere += ` AND r.Status = 'Oczekuje'`;
+      } else {
+        // mapped to actual status string like 'Zatwierdzona' or 'Odrzucona'
+        fromWhere += ` AND r.Status = ?`;
+        params.push(mapped);
+      }
+    } else {
+      // Domyślnie: zwykli użytkownicy widzą tylko zatwierdzone recenzje
+      if (!showMy && (!showAll || !isStaff)) {
+        fromWhere += ` AND r.Status = 'Zatwierdzona'`;
+      }
+    }
+
+    // Jeśli żądany jest tylko count, zwróć liczbę pasujących rekordów
+    if (countOnly) {
+      const [countRows] = await pool.query<RowDataPacket[]>(
+        `SELECT COUNT(*) as count ${fromWhere}`,
+        params
+      );
+      return NextResponse.json({ count: (countRows[0] && (countRows[0] as any).count) || 0 });
+    }
+
+    // Pełne zapytanie SELECT
+    const query = `
       SELECT 
         r.RecenzjaId AS id,
         r.KsiazkaId AS bookId,
@@ -82,33 +158,10 @@ export async function GET(request: NextRequest) {
         r.Zgloszona AS reported,
         r.PowodZgloszenia AS reportReason,
         r.CreatedAt AS createdAt
-      FROM recenzje r
-      JOIN ksiazki k ON r.KsiazkaId = k.KsiazkaId
-      JOIN uzytkownicy u ON r.UzytkownikId = u.UzytkownikId
-      WHERE r.IsDeleted = 0
+      ${fromWhere}
+      ORDER BY r.CreatedAt DESC
     `;
-    
-    const params: any[] = [];
-    
-    // Filtr po użytkowniku (moje recenzje)
-    if (showMy && user) {
-      query += ` AND r.UzytkownikId = ?`;
-      params.push(user.id);
-    }
-    
-    // Filtr po książce
-    if (bookId) {
-      query += ` AND r.KsiazkaId = ?`;
-      params.push(parseInt(bookId));
-    }
-    
-    // Tylko zatwierdzone dla zwykłych użytkowników (chyba że to ich własne recenzje)
-    if (!showMy && (!showAll || !isStaff)) {
-      query += ` AND r.Status = 'Zatwierdzona'`;
-    }
-    
-    query += ` ORDER BY r.CreatedAt DESC`;
-    
+
     const [rows] = await pool.query<RowDataPacket[]>(query, params);
     
     // Oblicz średnią ocenę jeśli filtrujemy po książce

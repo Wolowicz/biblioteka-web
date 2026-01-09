@@ -11,6 +11,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import type { AdminPanelProps } from "@/domain/types";
 import { useToast } from "@/app/_components/ui/Toast";
 import { Modal, ConfirmModal } from "@/app/_components/ui/Modal";
@@ -37,7 +38,7 @@ interface ActivityItem {
   userLastName?: string;
 }
 
-type ModalType = "addUser" | "addBook" | "reports" | "settings" | "trash" | null;
+type ModalType = "addUser" | "addBook" | "reports" | "trash" | null;
 
 // =============================================================================
 // KOMPONENTY POMOCNICZE
@@ -532,6 +533,7 @@ export default function AdminPanel({ user }: AdminPanelProps) {
   
   const role = user.role;
   const isAdmin = role === "ADMIN";
+  const router = useRouter();
 
   // Pobierz statystyki
   const fetchStats = useCallback(async () => {
@@ -720,7 +722,7 @@ export default function AdminPanel({ user }: AdminPanelProps) {
           iconColor={isAdmin ? "text-amber-400" : "text-amber-600"}
           title="Ustawienia"
           subtitle="Konfiguracja"
-          onClick={() => setActiveModal("settings")}
+          onClick={() => router.push("/admin/settings")}
           isAdmin={isAdmin}
           delay={700}
         />
@@ -843,41 +845,7 @@ export default function AdminPanel({ user }: AdminPanelProps) {
         <ReportsPanel isAdmin={isAdmin} />
       </Modal>
 
-      {/* Modal: Ustawienia */}
-      <Modal
-        isOpen={activeModal === "settings"}
-        onClose={() => setActiveModal(null)}
-        title="Ustawienia systemu"
-        size="md"
-      >
-        <div className="space-y-4">
-          <p className="text-slate-500 text-sm">
-            Konfiguracja systemu bibliotecznego. Niektóre opcje są dostępne tylko dla administratorów.
-          </p>
-          <div className={`p-4 rounded-xl border ${isAdmin ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`font-medium ${isAdmin ? "text-white" : "text-slate-900"}`}>Powiadomienia email</p>
-                <p className={`text-sm ${isAdmin ? "text-slate-400" : "text-slate-500"}`}>Automatyczne przypomnienia o terminach</p>
-              </div>
-              <button className="w-12 h-6 rounded-full bg-indigo-600 relative">
-                <span className="absolute right-1 top-1 w-4 h-4 rounded-full bg-white"></span>
-              </button>
-            </div>
-          </div>
-          <div className={`p-4 rounded-xl border ${isAdmin ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`font-medium ${isAdmin ? "text-white" : "text-slate-900"}`}>Tryb ciemny</p>
-                <p className={`text-sm ${isAdmin ? "text-slate-400" : "text-slate-500"}`}>Preferowany motyw kolorystyczny</p>
-              </div>
-              <button className={`w-12 h-6 rounded-full relative ${isAdmin ? "bg-indigo-600" : "bg-slate-300"}`}>
-                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white ${isAdmin ? "right-1" : "left-1"}`}></span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </Modal>
+
 
       {/* Modal: Kosz */}
       <Modal

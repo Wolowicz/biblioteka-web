@@ -18,6 +18,7 @@ export default function AdminSettingsClient({ user }: { user: UserSession }) {
       setSaving(true);
       const response = await fetch("/api/profile", {
         method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           firstName,
@@ -47,15 +48,16 @@ export default function AdminSettingsClient({ user }: { user: UserSession }) {
       return;
     }
 
-    if (newPassword.length < 6) {
-      alert("Hasło musi mieć co najmniej 6 znaków");
+    if (newPassword.length < 8) {
+      alert("Hasło musi mieć co najmniej 8 znaków");
       return;
     }
 
     try {
       setSaving(true);
-      const response = await fetch("/api/profile/change-password", {
-        method: "POST",
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           currentPassword,
@@ -220,37 +222,7 @@ export default function AdminSettingsClient({ user }: { user: UserSession }) {
           </div>
         </div>
 
-        {/* System Preferences */}
-        <div className="bg-[#141414] border border-gray-800 rounded-2xl p-6">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <i className="fas fa-cog text-purple-400" aria-hidden="true"></i>
-            Preferencje systemowe
-          </h2>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between py-3 border-b border-gray-800">
-              <div>
-                <p className="font-medium">Powiadomienia email</p>
-                <p className="text-sm text-gray-500">Otrzymuj powiadomienia o ważnych zdarzeniach</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" defaultChecked />
-                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-              </label>
-            </div>
-
-            <div className="flex items-center justify-between py-3">
-              <div>
-                <p className="font-medium">Tryb ciemny</p>
-                <p className="text-sm text-gray-500">Zawsze włączony</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" defaultChecked disabled />
-                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-              </label>
-            </div>
-          </div>
-        </div>
       </div>
     </AdminLayout>
   );

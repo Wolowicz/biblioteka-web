@@ -20,10 +20,15 @@ export default async function AdminFinesPage() {
   const user = await getUserSessionSSR();
   
   if (!user) {
-    redirect("/api/auth/login");
+    redirect("/welcome");
   }
 
-  if (user.role !== "ADMIN" && user.role !== "LIBRARIAN") {
+  // LIBRARIAN ma własny panel kar w /librarian/borrowings
+  if (user.role === "LIBRARIAN") {
+    redirect("/librarian/borrowings");
+  }
+
+  if (user.role !== "ADMIN") {
     redirect("/");
   }
 

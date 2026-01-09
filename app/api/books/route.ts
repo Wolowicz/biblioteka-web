@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       SELECT
         k.KsiazkaId AS id,
         k.Tytul AS title,
-        NULL AS coverUrl,
+        k.OkladkaUrl AS coverUrl,
         COALESCE(GROUP_CONCAT(DISTINCT a.ImieNazwisko SEPARATOR ', '), 'Brak autora') AS authors,
         (k.DostepneEgzemplarze > 0) AS available,
         k.DostepneEgzemplarze AS availableCopies,

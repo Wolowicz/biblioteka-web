@@ -67,6 +67,17 @@ export default async function BookDetailsPage({ params }: BookPageProps) {
 
   const book: BookDetails = await res.json();
 
+  // Pobierz listę e-booków powiązanych z tą książką (serwerowy fetch)
+  const cookieHeader = h.get('cookie') || '';
+  const ebooksRes = await fetch(`${protocol}://${host}/api/ebooks?bookId=${bookId}`, { cache: 'no-store', headers: { cookie: cookieHeader } });
+  let ebooks: any[] = [];
+  if (ebooksRes.ok) {
+    const ebooksJson = await ebooksRes.json();
+    ebooks = ebooksJson.ebooks || [];
+  } else {
+    console.warn('Nie udało się pobrać e-booków dla książki', bookId);
+  }
+
   return (
     <AppShell>
       {/* Dekoracyjne tło */}
@@ -174,7 +185,7 @@ export default async function BookDetailsPage({ params }: BookPageProps) {
                 { label: "Rok wydania", value: book.year, icon: "fas fa-calendar", color: "from-blue-400 to-cyan-500" },
                 { label: "Wydawnictwo", value: book.publisher, icon: "fas fa-building", color: "from-purple-400 to-indigo-500" },
                 { label: "ISBN", value: book.isbn, icon: "fas fa-barcode", color: "from-emerald-400 to-teal-500" },
-                { label: "Liczba stron", value: "288", icon: "fas fa-file-alt", color: "from-amber-400 to-orange-500" },
+                { label: "Liczba stron", value: book.pageCount || "—", icon: "fas fa-file-alt", color: "from-amber-400 to-orange-500" },
               ].map((item, i) => (
                 <div key={i} className={`p-4 rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-lg ${isAdmin ? "bg-slate-900/50 hover:bg-slate-900" : "bg-white hover:shadow-indigo-500/10"}`}>
                   <div className={`w-10 h-10 rounded-xl bg-linear-to-br ${item.color} flex items-center justify-center mb-3 shadow-lg`}>
@@ -227,12 +238,14 @@ export default async function BookDetailsPage({ params }: BookPageProps) {
                 <span>📝</span> O czym jest ta książka?
               </h3>
               <p className={`leading-relaxed text-base ${isAdmin ? "text-slate-300" : "text-gray-600"}`}>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+                {book.description || "Brak opisu. Opis może zostać dodany przez bibliotekarza lub administratora."}
               </p>
-              <button className={`mt-4 text-sm font-bold flex items-center gap-2 transition-all hover:gap-3 ${isAdmin ? "text-indigo-400" : "text-indigo-600"}`}>
-                Czytaj więcej
-                <i className="fas fa-arrow-right text-xs"></i>
-              </button>
+              {book.description && book.description.length > 300 && (
+                <button className={`mt-4 text-sm font-bold flex items-center gap-2 transition-all hover:gap-3 ${isAdmin ? "text-indigo-400" : "text-indigo-600"}`}>
+                  Czytaj więcej
+                  <i className="fas fa-arrow-right text-xs"></i>
+                </button>
+              )}
             </div>
           </div>
 
@@ -241,25 +254,35 @@ export default async function BookDetailsPage({ params }: BookPageProps) {
             <h3 className={`text-xl font-black mb-4 flex items-center gap-2 ${isAdmin ? "text-white" : "text-slate-900"}`}>
               <span>📁</span> Pliki do pobrania
             </h3>
-            <div className={`group p-5 rounded-2xl border-2 flex items-center justify-between transition-all duration-300 hover:scale-[1.01] ${isAdmin ? "bg-slate-800/50 border-slate-700 hover:border-indigo-500/50" : "bg-linear-to-r from-white to-rose-50/50 border-rose-100 hover:border-rose-300 hover:shadow-lg hover:shadow-rose-500/10"}`}>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-red-400 to-rose-500 flex items-center justify-center shadow-lg shadow-red-500/25 group-hover:scale-110 transition-transform">
-                  <i className="fas fa-file-pdf text-2xl text-white" aria-hidden="true"></i>
-                </div>
-                <div>
-                  <p className={`font-bold ${isAdmin ? "text-white" : "text-slate-900"}`}>Fragment – Rozdział 1.pdf</p>
-                  <p className={`text-xs flex items-center gap-2 ${isAdmin ? "text-slate-400" : "text-gray-500"}`}>
-                    <span>📄 2.4 MB</span>
-                    <span>•</span>
-                    <span>Bezpłatny podgląd</span>
-                  </p>
-                </div>
+            <div className={`space-y-3`}> 
+            {ebooks.length === 0 ? (
+              <div className={`p-5 rounded-2xl border-2 transition-all duration-300 ${isAdmin ? "bg-slate-800/50 border-slate-700" : "bg-white/10 border-rose-100"}`}>
+                <p className={`${isAdmin ? 'text-slate-400' : 'text-gray-500'}`}>Brak plików do pobrania</p>
               </div>
-              <button className="px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 bg-linear-to-r from-slate-800 to-slate-900 text-white hover:from-indigo-600 hover:to-purple-600 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-105 flex items-center gap-2">
-                <i className="fas fa-eye"></i>
-                Podgląd
-              </button>
-            </div>
+            ) : (
+              ebooks.map((e: any) => (
+                <div key={e.id} className={`group p-5 rounded-2xl border-2 flex items-center justify-between transition-all duration-300 hover:scale-[1.01] ${isAdmin ? "bg-slate-800/50 border-slate-700 hover:border-indigo-500/50" : "bg-linear-to-r from-white to-rose-50/50 border-rose-100 hover:border-rose-300 hover:shadow-lg"}`}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-red-400 to-rose-500 flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
+                      <i className="fas fa-file-pdf text-2xl text-white" aria-hidden="true"></i>
+                    </div>
+                    <div>
+                      <p className={`font-bold ${isAdmin ? "text-white" : "text-slate-900"}`}>{e.title}</p>
+                      <p className={`text-xs flex items-center gap-2 ${isAdmin ? "text-slate-400" : "text-gray-500"}`}>
+                        <span>📄 {e.fileSize || ''}</span>
+                        <span>•</span>
+                        <span>{e.accessLevel || ''}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <a href={e.filePath} target="_blank" rel="noopener noreferrer" className="px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 bg-linear-to-r from-slate-800 to-slate-900 text-white hover:from-indigo-600 hover:to-purple-600 hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-105 flex items-center gap-2">
+                    <i className="fas fa-eye"></i>
+                    Podgląd
+                  </a>
+                </div>
+              ))
+            )}
+          </div>
           </div>
 
           {/* Recenzje */}

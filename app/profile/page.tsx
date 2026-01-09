@@ -430,7 +430,6 @@ function ProfilePageContent() {
     { id: "overview" as TabType, label: "Przegląd", icon: "fas fa-user" },
     { id: "edit" as TabType, label: "Edytuj profil", icon: "fas fa-edit" },
     { id: "password" as TabType, label: "Zmień hasło", icon: "fas fa-lock" },
-    { id: "settings" as TabType, label: "Ustawienia", icon: "fas fa-cog" },
   ];
 
   if (loading) {
@@ -1174,40 +1173,11 @@ function ProfilePageContent() {
           {/* Tab: Ustawienia */}
           {activeTab === "settings" && (
             <div className="space-y-6">
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                <h2 className="text-xl font-bold text-slate-900 mb-6">Ustawienia powiadomień</h2>
-                
-                <div className="space-y-4">
-                  <label className="flex items-center justify-between p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-all">
-                    <div>
-                      <div className="font-medium text-slate-900">Powiadomienia email</div>
-                      <div className="text-sm text-slate-500">Otrzymuj powiadomienia o wypożyczeniach i terminach</div>
-                    </div>
-                    <input type="checkbox" defaultChecked className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" />
-                  </label>
-                  
-                  <label className="flex items-center justify-between p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-all">
-                    <div>
-                      <div className="font-medium text-slate-900">Przypomnienia o zwrocie</div>
-                      <div className="text-sm text-slate-500">Otrzymuj przypomnienia 3 dni przed terminem zwrotu</div>
-                    </div>
-                    <input type="checkbox" defaultChecked className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" />
-                  </label>
-                  
-                  <label className="flex items-center justify-between p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-all">
-                    <div>
-                      <div className="font-medium text-slate-900">Newsletter</div>
-                      <div className="text-sm text-slate-500">Informacje o nowych książkach i wydarzeniach</div>
-                    </div>
-                    <input type="checkbox" className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" />
-                  </label>
-                </div>
-              </div>
-
+              {/* Strefa niebezpieczna - pozostawiona */}
               <div className="bg-white rounded-2xl border border-red-200 shadow-sm p-6">
                 <h2 className="text-xl font-bold text-red-600 mb-2">Strefa niebezpieczna</h2>
                 <p className="text-sm text-slate-500 mb-4">Nieodwracalne akcje związane z Twoim kontem</p>
-                
+
                 <button 
                   type="button"
                   className="px-4 py-2 border border-red-300 text-red-600 rounded-xl font-medium hover:bg-red-50 transition-all"
@@ -1217,7 +1187,7 @@ function ProfilePageContent() {
                 </button>
               </div>
             </div>
-          )}
+          )} 
 
           {/* Tab: Wypożyczenia */}
           {activeTab === "borrowings" && (

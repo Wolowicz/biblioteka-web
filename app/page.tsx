@@ -110,9 +110,14 @@ export default async function Page() {
     return <WelcomePage />;
   }
 
-  // Admin lub Bibliotekarz → przekieruj na dashboard
-  if (user.role === "ADMIN" || user.role === "LIBRARIAN") {
+  // Admin → przekieruj na dashboard admina
+  if (user.role === "ADMIN") {
     redirect("/admin/dashboard");
+  }
+
+  // Bibliotekarz → przekieruj do panelu bibliotekarza
+  if (user.role === "LIBRARIAN") {
+    redirect("/librarian");
   }
 
   // ---------------------------------------------------------------------------

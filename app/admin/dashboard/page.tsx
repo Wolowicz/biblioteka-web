@@ -20,10 +20,16 @@ export default async function AdminDashboardPage() {
   const user = await getUserSessionSSR();
   
   if (!user) {
-    redirect("/api/auth/login");
+    redirect("/welcome");
   }
 
-  if (user.role !== "ADMIN" && user.role !== "LIBRARIAN") {
+  // LIBRARIAN ma swój własny panel
+  if (user.role === "LIBRARIAN") {
+    redirect("/librarian");
+  }
+
+  // Tylko ADMIN może widzieć admin dashboard
+  if (user.role !== "ADMIN") {
     redirect("/");
   }
 

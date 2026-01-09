@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
             WHERE ka.KsiazkaId = k.KsiazkaId
           ) AS author,
 
-          NULL AS coverUrl,
+          k.OkladkaUrl AS coverUrl,
 
           w.DataWypozyczenia AS borrowDate,
           w.TerminZwrotu AS dueDate,
