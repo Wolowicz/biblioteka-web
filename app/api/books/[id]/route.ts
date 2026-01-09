@@ -164,10 +164,25 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     if (publisher !== undefined) { updates.push('Wydawnictwo = ?'); params.push(publisher); }
     if (year !== undefined) { updates.push('Rok = ?'); params.push(year); }
 
-    if (updates.length === 0) return NextResponse.json({ error: 'Brak danych do aktualizacji' }, { status: 400 });
+    if (updates.length === 0 && (!body.genreIds && body.genreIds !== undefined) && body.coverUrl === undefined) return NextResponse.json({ error: 'Brak danych do aktualizacji' }, { status: 400 });
 
-    params.push(bookId);
-    await pool.query(`UPDATE ksiazki SET ${updates.join(', ')} WHERE KsiazkaId = ?`, params);
+    if (updates.length > 0) {
+      params.push(bookId);
+      await pool.query(`UPDATE ksiazki SET ${updates.join(', ')} WHERE KsiazkaId = ?`, params);
+    }
+
+    // Update genres if provided (replace associations)
+    if (Array.isArray(body.genreIds)) {
+      await pool.query(`DELETE FROM ksiazki_gatunki WHERE KsiazkaId = ?`, [bookId]);
+      for (const gid of body.genreIds) {
+        await pool.query(`INSERT INTO ksiazki_gatunki (KsiazkaId, GatunekId) VALUES (?, ?)`, [bookId, gid]);
+      }
+    }
+
+    // Update cover url if provided
+    if (typeof body.coverUrl === 'string') {
+      await pool.query(`UPDATE ksiazki SET OkladkaUrl = ? WHERE KsiazkaId = ?`, [body.coverUrl || null, bookId]);
+    }
 
     // Log
     await pool.query(`INSERT INTO logi (TypCoSieStalo, UzytkownikId, Opis, Encja, EncjaId) VALUES ('Audyt', ?, ?, 'Ksiazki', ?)`, [user.id, `Zaktualizowano książkę: ${title || ''}`.trim(), bookId]);

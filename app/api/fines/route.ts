@@ -27,12 +27,33 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const statusFilter = searchParams.get("status");
+    const userIdParam = searchParams.get("userId");
+    const showAll = searchParams.get("all") === "true";
 
     const isStaff = user.role === "ADMIN" || user.role === "LIBRARIAN";
     
     // Budowanie warunków WHERE
-    let whereConditions = isStaff ? "1=1" : "w.UzytkownikId = ?";
-    const params: any[] = isStaff ? [] : [user.id];
+    let whereConditions: string;
+    const params: any[] = [];
+    
+    // Jeśli staff i podano userId
+    if (isStaff && userIdParam) {
+      whereConditions = "w.UzytkownikId = ?";
+      params.push(parseInt(userIdParam));
+    } 
+    // Jeśli staff i showAll
+    else if (isStaff && showAll) {
+      whereConditions = "1=1";
+    }
+    // Jeśli staff ale bez parametrów (domyślnie pokazuj wszystkie)
+    else if (isStaff) {
+      whereConditions = "1=1";
+    }
+    // Jeśli zwykły user (tylko swoje)
+    else {
+      whereConditions = "w.UzytkownikId = ?";
+      params.push(user.id);
+    }
 
     // Filtr statusu
     if (statusFilter === "UNPAID") {

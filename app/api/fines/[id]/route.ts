@@ -4,6 +4,7 @@
  * =============================================================================
  * 
  * PATCH /api/fines/[id] - Aktualizacja statusu kary (LIBRARIAN/ADMIN)
+ * PUT   /api/fines/[id] - Alias dla PATCH (rozliczenie kary)
  * 
  * @packageDocumentation
  */
@@ -99,3 +100,8 @@ export async function PATCH(request: NextRequest, context: RouteParams) {
     );
   }
 }
+
+/**
+ * Handler PUT - Alias dla PATCH (rozliczenie kary)
+ */
+export const PUT = PATCH;

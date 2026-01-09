@@ -64,10 +64,46 @@ import pool from "@/lib/db";
  * W prawdziwej aplikacji produkcyjnej, w tym miejscu powinna być
  * ścisła weryfikacja uprawnień po stronie serwera.
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Parse URL params
+    const { searchParams } = new URL(request.url);
+    const entity = searchParams.get("entity");
+    const action = searchParams.get("action");
+    const userId = searchParams.get("userId");
+    const dateFrom = searchParams.get("dateFrom");
+    const dateTo = searchParams.get("dateTo");
+    const limit = parseInt(searchParams.get("limit") || "100");
+
+    // Build WHERE conditions
+    const conditions: string[] = [];
+    const params: any[] = [];
+
+    if (entity) {
+      conditions.push("l.Encja = ?");
+      params.push(entity);
+    }
+    if (action) {
+      conditions.push("l.TypCoSieStalo = ?");
+      params.push(action);
+    }
+    if (userId) {
+      conditions.push("l.UzytkownikId = ?");
+      params.push(parseInt(userId));
+    }
+    if (dateFrom) {
+      conditions.push("l.Kiedy >= ?");
+      params.push(dateFrom);
+    }
+    if (dateTo) {
+      conditions.push("l.Kiedy <= ?");
+      params.push(dateTo);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
     // === SEKCJA: Zapytanie do bazy danych ===
-    // Pobieramy ostatnie 50 logów z informacjami o użytkownikach
+    // Pobieramy logi z parametrami filtrowania
     // LEFT JOIN pozwala na wyświetlenie logów nawet bez powiązanego użytkownika
     const [rows] = await pool.query(
       `
@@ -79,12 +115,16 @@ export async function GET() {
         l.Opis AS description,
         l.Encja AS entity,
         l.EncjaId AS entityId,
+        l.StanPrzed AS stateBefore,
+        l.StanPo AS stateAfter,
         l.Kiedy AS timestamp
       FROM Logi l
       LEFT JOIN Uzytkownicy u ON u.UzytkownikId = l.UzytkownikId
+      ${whereClause}
       ORDER BY l.Kiedy DESC
-      LIMIT 50;
-      `
+      LIMIT ?;
+      `,
+      [...params, limit]
     );
 
     // === SEKCJA: Odpowiedź sukcesu ===

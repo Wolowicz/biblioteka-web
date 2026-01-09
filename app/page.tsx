@@ -8,13 +8,15 @@
  * 
  * Logika routingu:
  * - Niezalogowany użytkownik → strona powitalna (WelcomePage)
+ * - Admin/Bibliotekarz → przekierowanie na /admin/dashboard
  * - Zalogowany użytkownik → katalog książek (AppShell + ClientFilter)
  * 
  * Przepływ danych:
  * 1. Pobierz sesję użytkownika z cookie (SSR)
  * 2. Jeśli brak sesji → renderuj WelcomePage
- * 3. Jeśli sesja istnieje → pobierz książki z API
- * 4. Renderuj AppShell z katalogiem książek
+ * 3. Jeśli ADMIN lub LIBRARIAN → redirect("/admin/dashboard")
+ * 4. Jeśli sesja istnieje → pobierz książki z API
+ * 5. Renderuj AppShell z katalogiem książek
  * 
  * Zależności:
  * - @/lib/auth/server - pobieranie sesji SSR
@@ -25,6 +27,7 @@
  */
 
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { getUserSessionSSR } from "@/lib/auth/server";
 import WelcomePage from "./welcome/page";
 import AppShell from "./_components/AppShell";
@@ -105,6 +108,11 @@ export default async function Page() {
   // Niezalogowany użytkownik → strona powitalna
   if (!user) {
     return <WelcomePage />;
+  }
+
+  // Admin lub Bibliotekarz → przekieruj na dashboard
+  if (user.role === "ADMIN" || user.role === "LIBRARIAN") {
+    redirect("/admin/dashboard");
   }
 
   // ---------------------------------------------------------------------------

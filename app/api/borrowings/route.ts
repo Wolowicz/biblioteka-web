@@ -247,7 +247,10 @@ async function getAllBorrowings(statusFilter: string | null) {
         w.TerminZwrotu AS dueDate,
         w.DataZwrotu AS returnDate,
         w.Status AS status,
-        COALESCE(w.IloscPrzedluzen, 0) AS extensions
+        COALESCE(w.IloscPrzedluzen, 0) AS extensions,
+        COALESCE((
+          SELECT SUM(Kwota) FROM kary WHERE WypozyczenieId = w.WypozyczenieId AND Status = 'Naliczona'
+        ), 0) AS fine
       FROM wypozyczenia w
       JOIN uzytkownicy u ON w.UzytkownikId = u.UzytkownikId
       JOIN egzemplarze e ON w.EgzemplarzId = e.EgzemplarzId

@@ -19,6 +19,7 @@ import bcrypt from "bcrypt";
  * Handler GET - Lista użytkowników
  * 
  * Parametry query:
+ * - search: Wyszukiwanie po nazwisku, imieniu lub emailu
  * - includeDeleted=true: Uwzględnij usuniętych użytkowników
  * - role=READER|LIBRARIAN|ADMIN: Filtruj po roli
  */
@@ -34,6 +35,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const includeDeleted = searchParams.get("includeDeleted") === "true";
     const roleFilter = searchParams.get("role");
+    const searchQuery = searchParams.get("search");
 
     const conditions: string[] = [];
     const params: (string | number)[] = [];
@@ -42,17 +44,24 @@ export async function GET(request: NextRequest) {
       conditions.push("u.IsDeleted = 0");
     }
 
-    // Mapowanie roli na polskie nazwy w bazie
+    // Wyszukiwanie po nazwisku lub emailu
+    if (searchQuery && searchQuery.length > 0) {
+      conditions.push("(u.Nazwisko LIKE ? OR u.Email LIKE ? OR u.Imie LIKE ?)");
+      const searchPattern = `%${searchQuery}%`;
+      params.push(searchPattern, searchPattern, searchPattern);
+    }
+
+    // Mapowanie roli - użycie RolaId
     if (roleFilter) {
-      const roleMap: Record<string, string> = {
-        "READER": "Czytelnik",
-        "LIBRARIAN": "Bibliotekarz",
-        "ADMIN": "Administrator"
+      const roleIdMap: Record<string, number> = {
+        "READER": 3,
+        "LIBRARIAN": 2,
+        "ADMIN": 1
       };
-      const polishRole = roleMap[roleFilter];
-      if (polishRole) {
-        conditions.push("r.NazwaRoli = ?");
-        params.push(polishRole);
+      const roleId = roleIdMap[roleFilter];
+      if (roleId) {
+        conditions.push("u.RolaId = ?");
+        params.push(roleId);
       }
     }
 
@@ -63,8 +72,9 @@ export async function GET(request: NextRequest) {
         u.Imie AS firstName,
         u.Nazwisko AS lastName,
         CASE r.NazwaRoli
-          WHEN 'Administrator' THEN 'ADMIN'
-          WHEN 'Bibliotekarz' THEN 'LIBRARIAN'
+          WHEN 'ADMIN' THEN 'ADMIN'
+          WHEN 'BIBLIOTEKARZ' THEN 'LIBRARIAN'
+          WHEN 'CZYTELNIK' THEN 'READER'
           ELSE 'READER'
         END AS role,
         r.NazwaRoli AS roleName,

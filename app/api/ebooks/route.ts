@@ -40,8 +40,7 @@ export async function GET(request: NextRequest) {
         e.KsiazkaId,
         e.PoziomDostepu,
         e.CreatedAt,
-        k.Tytul as KsiazkaTitle,
-        k.OkladkaUrl
+        k.Tytul as KsiazkaTitle
       FROM ebooki e
       LEFT JOIN ksiazki k ON e.KsiazkaId = k.KsiazkaId
       WHERE e.IsDeleted = 0
@@ -93,7 +92,6 @@ export async function GET(request: NextRequest) {
         format: ebook.Format,
         bookId: ebook.KsiazkaId,
         bookTitle: ebook.KsiazkaTitle,
-        bookCover: ebook.OkladkaUrl,
         accessLevel: ebook.PoziomDostepu,
         createdAt: ebook.CreatedAt
       })),

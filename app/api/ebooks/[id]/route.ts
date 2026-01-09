@@ -44,7 +44,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         e.CreatedAt,
         e.CreatedBy,
         k.Tytul as KsiazkaTitle,
-        k.OkladkaUrl,
         u.Imie as CreatedByName,
         u.Nazwisko as CreatedByLastname
        FROM ebooki e
@@ -88,7 +87,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         format: ebook.Format,
         bookId: ebook.KsiazkaId,
         bookTitle: ebook.KsiazkaTitle,
-        bookCover: ebook.OkladkaUrl,
         accessLevel: ebook.PoziomDostepu,
         createdAt: ebook.CreatedAt,
         createdBy: ebook.CreatedByName && ebook.CreatedByLastname 
