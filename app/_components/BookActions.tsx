@@ -117,8 +117,8 @@ export default function BookActions({ bookId, available, variant = "full" }: Boo
         <button
           disabled
           className={`
-            ${variant === "full" ? "w-full py-3" : "flex-1 py-1.5 px-3"} 
-            rounded-xl text-sm font-semibold bg-gray-300 text-gray-500 animate-pulse
+            ${variant === "full" ? "w-full py-4 font-bold" : "flex-1 py-1.5 px-3"} 
+            rounded-2xl text-sm bg-gray-300 text-gray-500 animate-pulse
           `}
         >
           Ładowanie...
@@ -134,8 +134,8 @@ export default function BookActions({ bookId, available, variant = "full" }: Boo
         <button
           disabled
           className={`
-            ${variant === "full" ? "w-full py-3" : "flex-1 py-1.5 px-3"} 
-            rounded-xl text-sm font-semibold bg-gray-400 text-white cursor-not-allowed
+            ${variant === "full" ? "w-full py-4 font-bold" : "flex-1 py-1.5 px-3"} 
+            rounded-2xl text-sm bg-gray-400 text-white cursor-not-allowed
           `}
         >
           Zaloguj się
@@ -153,8 +153,8 @@ export default function BookActions({ bookId, available, variant = "full" }: Boo
         onClick={handleReserve}
         disabled={hasBorrowed || !available || actionStatus === "loading"}
         className={`
-          ${isCompact ? "flex-1 py-1.5 px-3" : "w-full py-3"} 
-          rounded-xl text-sm font-semibold transition flex items-center justify-center gap-2
+          ${isCompact ? "flex-1 py-1.5 px-3" : "w-full py-4 font-bold"} 
+          rounded-2xl text-sm transition flex items-center justify-center gap-2
           ${hasBorrowed || !available || actionStatus === "loading"
             ? "bg-gray-400 cursor-not-allowed text-white"
             : "bg-blue-600 hover:bg-blue-500 text-white"

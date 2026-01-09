@@ -46,6 +46,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
+import { getUserSessionSSR } from "@/lib/auth/server";
 
 /**
  * Handler GET - Pobieranie szczegółów książki
@@ -138,5 +139,42 @@ export async function GET(
       { error: "Błąd bazy danych" },
       { status: 500 }
     );
+  }
+}
+
+// PATCH - aktualizacja metadanych książki (ADMIN/LIBRARIAN)
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  try {
+    const user = await getUserSessionSSR();
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'LIBRARIAN')) {
+      return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });
+    }
+
+    const { id } = await context.params;
+    const bookId = Number(id);
+    if (!Number.isFinite(bookId)) return NextResponse.json({ error: 'Złe ID' }, { status: 400 });
+
+    const body = await request.json();
+    const { title, isbn, publisher, year } = body;
+
+    const updates: string[] = [];
+    const params: any[] = [];
+    if (title) { updates.push('Tytul = ?'); params.push(title); }
+    if (isbn !== undefined) { updates.push('numerISBN = ?'); params.push(isbn); }
+    if (publisher !== undefined) { updates.push('Wydawnictwo = ?'); params.push(publisher); }
+    if (year !== undefined) { updates.push('Rok = ?'); params.push(year); }
+
+    if (updates.length === 0) return NextResponse.json({ error: 'Brak danych do aktualizacji' }, { status: 400 });
+
+    params.push(bookId);
+    await pool.query(`UPDATE ksiazki SET ${updates.join(', ')} WHERE KsiazkaId = ?`, params);
+
+    // Log
+    await pool.query(`INSERT INTO logi (TypCoSieStalo, UzytkownikId, Opis, Encja, EncjaId) VALUES ('Audyt', ?, ?, 'Ksiazki', ?)`, [user.id, `Zaktualizowano książkę: ${title || ''}`.trim(), bookId]);
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Error PATCH /api/books/[id]:', err);
+    return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
   }
 }

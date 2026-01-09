@@ -141,7 +141,7 @@ export default function AppShellInner({ user, children }: AppShellProps) {
           {/* Lewa strona - Logo (klikalne) */}
           <button
             type="button"
-            onClick={() => router.push("/")}
+            onClick={() => router.push(isAdmin ? "/admin" : "/")}
             className="flex items-center gap-2.5 group"
           >
             <div className={`w-8 h-8 ${isAdmin ? "bg-linear-to-tr from-indigo-500 to-purple-600" : "bg-indigo-600"} rounded-lg flex items-center justify-center text-white shadow-lg ${isAdmin ? "" : "shadow-indigo-500/30"} group-hover:scale-105 transition-transform`}>
@@ -170,6 +170,24 @@ export default function AppShellInner({ user, children }: AppShellProps) {
                     className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${getNavButtonStyle("/admin")}`}
                   >
                     Panel admina
+                  </button>
+                  <button
+                    onClick={() => router.push("/admin/books")}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${getNavButtonStyle("/admin/books")}`}
+                  >
+                    Książki
+                  </button>
+                  <button
+                    onClick={() => router.push("/admin/users")}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${getNavButtonStyle("/admin/users")}`}
+                  >
+                    Użytkownicy
+                  </button>
+                  <button
+                    onClick={() => router.push("/admin/logs")}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${getNavButtonStyle("/admin/logs")}`}
+                  >
+                    Logi
                   </button>
                   <button
                     onClick={() => router.push("/librarian")}
@@ -239,6 +257,40 @@ export default function AppShellInner({ user, children }: AppShellProps) {
                       <i className="fas fa-user w-4 text-center" aria-hidden="true"></i>
                       Mój profil
                     </button>
+                    {role === "ADMIN" && (
+                      <>
+                        <button
+                          onClick={() => router.push("/admin")}
+                          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${getNavButtonStyle("/admin")}`}
+                        >
+                          Panel admina
+                        </button>
+                        <button
+                          onClick={() => router.push("/admin/books")}
+                          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${getNavButtonStyle("/admin/books")}`}
+                        >
+                          Książki
+                        </button>
+                        <button
+                          onClick={() => router.push("/admin?tab=users")}
+                          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${getNavButtonStyle("/admin?tab=users")}`}
+                        >
+                          Użytkownicy
+                        </button>
+                        <button
+                          onClick={() => router.push("/admin?tab=logs")}
+                          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${getNavButtonStyle("/admin?tab=logs")}`}
+                        >
+                          Logi
+                        </button>
+                        <button
+                          onClick={() => router.push("/librarian")}
+                          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${getNavButtonStyle("/librarian")}`}
+                        >
+                          Wypożyczenia
+                        </button>
+                      </>
+                    )}
                     {role === "READER" && (
                       <>
                         <button

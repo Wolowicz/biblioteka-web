@@ -68,6 +68,14 @@ export async function GET(request: NextRequest) {
          ORDER BY l.Kiedy DESC
          LIMIT 10`
       ),
+      // Trend wypożyczeń (ostatnie 30 dni)
+      pool.query<RowDataPacket[]>(
+        `SELECT DATE(DataWypozyczenia) as d, COUNT(*) as cnt
+         FROM wypozyczenia
+         WHERE DataWypozyczenia >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
+         GROUP BY DATE(DataWypozyczenia)
+         ORDER BY DATE(DataWypozyczenia) ASC`
+      ),
     ]);
 
     // Przygotuj odpowiedź
@@ -91,6 +99,31 @@ export async function GET(request: NextRequest) {
       },
       recentActivity: recentActivity as RowDataPacket[],
     };
+
+    // Build a series for the last 30 days (including today)
+    const today = new Date();
+    const series: number[] = [];
+    const raw: Record<string, number> = {};
+    try {
+      const trendRows = (await pool.query<RowDataPacket[]>(
+        `SELECT DATE(DataWypozyczenia) as d, COUNT(*) as cnt
+         FROM wypozyczenia
+         WHERE DataWypozyczenia >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
+         GROUP BY DATE(DataWypozyczenia)`
+      )) as any;
+      const rows = trendRows[0] as RowDataPacket[];
+      rows.forEach((row) => { raw[String(row.d)] = Number(row.cnt); });
+    } catch (e) {
+      // ignore errors building trend
+    }
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      series.push(raw[key] || 0);
+    }
+
+    (stats as any).borrowingsTrend = series;
 
     return NextResponse.json(stats);
 

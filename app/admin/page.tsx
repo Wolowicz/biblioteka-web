@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useToast } from "@/app/_components/ui/Toast";
 import { AppShell } from "@/app/_components/AppShell";
 
 interface User {
@@ -19,22 +20,33 @@ interface Log {
   userId: number;
   userEmail: string;
   action: string;
-  details: string;
-  ipAddress: string;
+  details?: string;
+  description?: string;
+  ipAddress?: string;
   createdAt: string;
 }
 
 interface Stats {
-  totalUsers: number;
-  totalBooks: number;
-  totalBorrowings: number;
-  activeBorrowings: number;
-  overdueBorrowings: number;
-  unpaidFines: number;
+  users?: { total?: number; trend?: string };
+  books?: { total?: number; available?: number; trend?: string };
+  borrowings?: { active?: number; overdue?: number; trend?: string };
+  reservations?: { pending?: number };
+  unpaidFines?: number;
+  borrowingsTrend?: number[];
+  recentActivity?: any[];
 }
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"users" | "logs" | "stats">("stats");
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      const sp = new URLSearchParams(window.location.search);
+      const tab = sp.get('tab');
+      if (tab === 'users' || tab === 'logs' || tab === 'stats') setActiveTab(tab as any);
+    } catch {}
+  }, []);
+
   const [users, setUsers] = useState<User[]>([]);
   const [logs, setLogs] = useState<Log[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -46,8 +58,10 @@ export default function AdminPage() {
   // Users filters
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
+  const [logsSearch, setLogsSearch] = useState("");
   
   const [showUserModal, setShowUserModal] = useState(false);
+  const toast = useToast();
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [userForm, setUserForm] = useState({ email: "", firstName: "", lastName: "", password: "", role: "READER", active: true });
   const [saving, setSaving] = useState(false);
@@ -67,7 +81,20 @@ export default function AdminPage() {
       } else if (activeTab === "stats") {
         const response = await fetch("/api/admin/stats");
         const data = await response.json();
-        setStats(data.stats);
+        let s = data.stats ?? data;
+        // Backwards-compatibility: accept older flat shape
+        if (s && typeof s === "object" && s.totalUsers !== undefined) {
+          s = {
+            users: { total: s.totalUsers },
+            books: { total: s.totalBooks, available: (s.totalBooksAvailable ?? 0) },
+            borrowings: { active: s.activeBorrowings ?? 0, overdue: s.overdueBorrowings ?? 0 },
+            reservations: { pending: s.reservationsPending ?? 0 },
+            unpaidFines: s.unpaidFines ?? 0,
+            borrowingsTrend: s.borrowingsTrend ?? s.trend ?? undefined,
+            recentActivity: s.recentActivity ?? [],
+          };
+        }
+        setStats(s as any);
       }
     } catch {
       console.error("Błąd ładowania danych");
@@ -94,7 +121,7 @@ export default function AdminPage() {
     setSaving(true);
     try {
       const url = editingUser ? `/api/admin/users/${editingUser.id}` : "/api/admin/users";
-      const method = editingUser ? "PUT" : "POST";
+      const method = editingUser ? "PATCH" : "POST";
       const body: Record<string, unknown> = { ...userForm };
       if (editingUser && !userForm.password) delete body.password;
       
@@ -106,13 +133,14 @@ export default function AdminPage() {
       
       if (!response.ok) {
         const data = await response.json();
-        alert(data.error || "Błąd");
+        toast.error(data.error || "Błąd");
         return;
       }
       setShowUserModal(false);
+      toast.success(editingUser ? "Zaktualizowano użytkownika" : "Utworzono użytkownika");
       fetchData();
     } catch {
-      alert("Błąd zapisywania użytkownika");
+      toast.error("Błąd zapisywania użytkownika");
     } finally {
       setSaving(false);
     }
@@ -124,9 +152,10 @@ export default function AdminPage() {
     try {
       const response = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
       if (!response.ok) throw new Error("Błąd");
+      toast.success('Usunięto użytkownika');
       fetchData();
     } catch {
-      alert("Błąd usuwania");
+      toast.error("Błąd usuwania");
     } finally {
       setDeleting(null);
     }
@@ -148,6 +177,8 @@ export default function AdminPage() {
     );
   }
 
+  const borrowingsTrend = stats?.borrowingsTrend ?? [];
+
   return (
     <AppShell>
       <div className={`p-6 rounded-2xl ${isDark ? "bg-slate-900 text-slate-100" : ""}`}>
@@ -168,30 +199,85 @@ export default function AdminPage() {
 
       {/* Stats Tab */}
       {activeTab === "stats" && stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          <div className={`rounded-lg border p-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white"}`}>
-            <div className="text-3xl font-bold text-indigo-300">{stats.totalUsers.toLocaleString("pl-PL")}</div>
-            <div className={`${isDark ? "text-slate-400" : "text-gray-500"}`}>Użytkowników</div>
+        <div className="grid grid-cols-1 gap-6">
+          {/* Top summary cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className={`rounded-lg border p-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white"}`}>
+              <div className="text-3xl font-bold text-indigo-300">{(stats.users?.total ?? 0).toLocaleString("pl-PL")}</div>
+              <div className={`${isDark ? "text-slate-400" : "text-gray-500"}`}>Zarejestrowani Użytkownicy</div>
+            </div>
+            <div className={`rounded-lg border p-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white"}`}>
+              <div className="text-3xl font-bold text-emerald-300">{(stats.books?.total ?? 0).toLocaleString("pl-PL")}</div>
+              <div className={`${isDark ? "text-slate-400" : "text-gray-500"}`}>Książki w Magazynie</div>
+            </div>
+            <div className={`rounded-lg border p-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white"}`}>
+              <div className="text-3xl font-bold text-indigo-300">{(stats.borrowings?.active ?? 0).toLocaleString("pl-PL")}</div>
+              <div className={`${isDark ? "text-slate-400" : "text-gray-500"}`}>Aktywne Wypożyczenia</div>
+            </div>
+            <div className={`rounded-lg border p-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white"}`}>
+              <div className="text-3xl font-bold text-rose-300">{(stats.borrowings?.overdue ?? 0).toLocaleString("pl-PL")}</div>
+              <div className={`${isDark ? "text-slate-400" : "text-gray-500"}`}>Naliczone Kary</div>
+            </div>
           </div>
-          <div className={`rounded-lg border p-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white"}`}>
-            <div className="text-3xl font-bold text-emerald-300">{stats.totalBooks.toLocaleString("pl-PL")}</div>
-            <div className={`${isDark ? "text-slate-400" : "text-gray-500"}`}>Książek</div>
+
+          {/* Trend + Quick Actions */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className={`lg:col-span-2 rounded-lg p-6 relative ${isDark ? "bg-slate-800 border-slate-700" : "bg-white"}`}>
+              <h3 className={`text-lg font-bold mb-4 ${isDark ? "text-slate-100" : "text-gray-800"}`}>Trendy Wypożyczeń (Ostatnie 30 dni)</h3>
+              <div className="flex items-center justify-center h-64 w-full">
+                {stats.borrowingsTrend && stats.borrowingsTrend.length > 0 ? (
+                  <svg viewBox="0 0 300 80" className="w-full h-full">
+                    <polyline
+                      fill="none"
+                      stroke="#60a5fa"
+                      strokeWidth={2}
+                      points={borrowingsTrend.map((v, i) => `${(i/(borrowingsTrend.length-1 || 1))*300},${80 - (v / Math.max(...borrowingsTrend,1))*70}`).join(" ")}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-400">Brak danych</div>
+                )}
+              </div>
+            </div>
+
+            <div className={`rounded-lg p-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white"}`}>
+              <h3 className={`text-lg font-bold mb-4 ${isDark ? "text-slate-100" : "text-gray-800"}`}>Szybkie Akcje</h3>
+              <div className="flex flex-col gap-3">
+                <a className="flex w-full items-center justify-center rounded-full h-12 px-6 bg-amber-500/20 text-amber-300 text-sm font-bold" href="/admin/notifications">Powiadomienia Systemowe</a>
+                <a className="flex w-full items-center justify-center rounded-full h-12 px-6 bg-indigo-600 text-white text-sm font-bold" href="/admin/books">Zarządzaj Książkami</a>
+                <button onClick={() => setActiveTab('users')} className="flex w-full items-center justify-center rounded-full h-12 px-6 bg-indigo-600/20 text-white text-sm font-bold">Zarządzaj Użytkownikami</button>
+                <a className="flex w-full items-center justify-center rounded-full h-12 px-6 bg-red-500/20 text-red-400 text-sm font-bold" href="/admin/fines">Zarządzaj Karami</a>
+                <button onClick={() => setActiveTab('logs')} className="flex w-full items-center justify-center rounded-full h-12 px-6 bg-indigo-500/20 text-indigo-300 text-sm font-bold">Logi i Audyt</button>
+              </div>
+            </div>
           </div>
-          <div className={`rounded-lg border p-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white"}`}>
-            <div className="text-3xl font-bold text-purple-300">{stats.totalBorrowings.toLocaleString("pl-PL")}</div>
-            <div className={`${isDark ? "text-slate-400" : "text-gray-500"}`}>Wypożyczeń</div>
-          </div>
-          <div className={`rounded-lg border p-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white"}`}>
-            <div className="text-3xl font-bold text-indigo-300">{stats.activeBorrowings.toLocaleString("pl-PL")}</div>
-            <div className={`${isDark ? "text-slate-400" : "text-gray-500"}`}>Aktywnych wypożyczeń</div>
-          </div>
-          <div className={`rounded-lg border p-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white"}`}>
-            <div className="text-3xl font-bold text-rose-300">{stats.overdueBorrowings.toLocaleString("pl-PL")}</div>
-            <div className={`${isDark ? "text-slate-400" : "text-gray-500"}`}>Przetrzymanych</div>
-          </div>
-          <div className={`rounded-lg border p-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white"}`}>
-            <div className="text-3xl font-bold text-amber-300">{stats.unpaidFines.toFixed(2)} zł</div>
-            <div className={`${isDark ? "text-slate-400" : "text-gray-500"}`}>Nieopłaconych kar</div>
+
+          {/* Recent activity */}
+          <div className={`rounded-lg p-6 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white"}`}>
+            <h3 className={`text-lg font-bold mb-4 ${isDark ? "text-slate-100" : "text-gray-800"}`}>Ostatnia Aktywność</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="p-3 text-sm font-semibold text-[#A0A0A0]">Typ Akcji</th>
+                    <th className="p-3 text-sm font-semibold text-[#A0A0A0]">Użytkownik</th>
+                    <th className="p-3 text-sm font-semibold text-[#A0A0A0]">Szczegóły</th>
+                    <th className="p-3 text-sm font-semibold text-[#A0A0A0]">Data</th>
+                  </tr>
+                </thead>
+                <tbody className="text-white">
+                  {(stats.recentActivity || []).map((a, idx) => (
+                    <tr key={idx} className="border-b border-white/10">
+                      <td className="p-3 text-sm">{a.type || '-'}</td>
+                      <td className="p-3 text-sm">{a.userFirstName ? `${a.userFirstName} ${a.userLastName || ''}` : '-'}</td>
+                      <td className="p-3 text-sm">{a.description || a.entity || '-'}</td>
+                      <td className="p-3 text-sm text-[#A0A0A0]">{a.timestamp ? new Date(a.timestamp).toLocaleString('pl-PL') : '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -260,6 +346,10 @@ export default function AdminPage() {
 
       {/* Logs Tab */}
       {activeTab === "logs" && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <input value={logsSearch} onChange={(e) => setLogsSearch(e.target.value)} placeholder="Szukaj w logach..." className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 w-full" />
+          </div>
         <div className={`${isDark ? "bg-slate-800 border-slate-700" : "bg-white"} rounded-lg border shadow-sm overflow-x-auto`}>
           <div className="flex items-center justify-between p-4 border-b border-slate-700">
             <h3 className={`font-medium ${isDark ? "text-slate-100" : "text-gray-800"}`}>Ostatnie logi</h3>
@@ -278,19 +368,24 @@ export default function AdminPage() {
               </tr>
             </thead>
             <tbody>
-              {logs.map((log) => (
+              {logs.filter((l) => {
+                if (!logsSearch) return true;
+                const s = logsSearch.toLowerCase();
+                return (l.userEmail||'').toLowerCase().includes(s) || (l.action||'').toLowerCase().includes(s) || (l.description||l.details||'').toLowerCase().includes(s);
+              }).map((log) => (
                 <tr key={log.id} className={`${isDark ? "border-b border-slate-700 hover:bg-slate-800/60" : "border-b hover:bg-gray-50"}`}>
                   <td className={`p-4 text-sm ${isDark ? "text-slate-200" : ""}`}>{new Date(log.createdAt).toLocaleString("pl-PL")}</td>
                   <td className={`p-4 ${isDark ? "text-slate-200" : ""}`}>{log.userEmail || "-"}</td>
                   <td className={`p-4 ${isDark ? "text-slate-200" : ""}`}>
                     <span className={`${isDark ? "px-2 py-1 text-xs rounded bg-slate-700 font-mono" : "px-2 py-1 text-xs rounded bg-gray-100 font-mono"}`}>{log.action}</span>
                   </td>
-                  <td className={`p-4 max-w-xs truncate text-sm ${isDark ? "text-slate-300" : "text-gray-600"}`}>{log.details}</td>
+                  <td className={`p-4 max-w-xs truncate text-sm ${isDark ? "text-slate-300" : "text-gray-600"}`}>{log.description || log.details}</td>
                   <td className={`p-4 text-sm ${isDark ? "text-slate-300" : "text-gray-500"}`}>{log.ipAddress}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
         </div>
       )}
 

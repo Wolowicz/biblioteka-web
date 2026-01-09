@@ -77,24 +77,24 @@ export default async function BookDetailsPage({ params }: BookPageProps) {
         {/* ================================================================ */}
         {/* LEWA KOLUMNA - OKŁADKA Z EFEKTAMI */}
         {/* ================================================================ */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-4">
           <div className="sticky top-16 h-[calc(100vh-6rem)] flex flex-col justify-between">
             {/* Okładka z glow effect */}
             <div className="relative group flex-1 flex items-center justify-center">
               {/* Glow za okładką */}
               <div className={`absolute -inset-2 rounded-2xl blur-3xl opacity-30 transition-all duration-500 group-hover:opacity-70 ${book.available ? "bg-linear-to-br from-emerald-400 to-teal-400" : "bg-linear-to-br from-purple-400 to-pink-400"}`}></div>
               
-              <div className={`relative aspect-[2/3] rounded-2xl overflow-hidden shadow-md ring-1 max-h-[28vh] sm:max-h-[36vh] lg:max-h-[48vh] ${book.available ? "ring-emerald-400/15" : "ring-purple-400/15"} transition-transform duration-300 group-hover:scale-[1.01] w-[86%]`}>
+              <div className={`relative aspect-2/3 rounded-2xl overflow-hidden shadow-md ring-1 max-h-[40vh] sm:max-h-[56vh] lg:max-h-[72vh] ${book.available ? "ring-emerald-400/15" : "ring-purple-400/15"} transition-transform duration-300 group-hover:scale-[1.01] w-full max-w-[360px] sm:max-w-[420px] mx-auto`}>
                 {book.coverUrl ? (
                   <img
                     src={book.coverUrl}
                     alt={`Okładka: ${book.title}`}
-                    className="w-full h-full object-cover transition-transform duration-500 sm:group-hover:scale-103"
+                    className="w-full h-full object-cover transition-transform duration-500 sm:group-hover:scale-105"
                   />
                 ) : (
                   <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
                     <div className="text-center">
-                      <i className="fas fa-book-open text-3xl mb-1" aria-hidden="true"></i>
+                      <i className="fas fa-book-open text-4xl mb-1" aria-hidden="true"></i>
                       <p className="text-sm font-medium">Brak okładki</p>
                     </div>
                   </div>
@@ -112,9 +112,9 @@ export default async function BookDetailsPage({ params }: BookPageProps) {
               </div>
             </div>
 
-            {/* Przyciski akcji - zwężone i dopasowane */}
-            <div className="mt-4 space-y-3 w-full">
-              <BookActions bookId={book.id} available={book.available} variant="compact" />
+            {/* Przyciski akcji - dopasowane pod okładkę */}
+            <div className="mt-2 space-y-2 w-full max-w-[360px] sm:max-w-[420px] mx-auto">
+              <BookActions bookId={book.id} available={book.available} variant="full" />
               <FavoriteButton bookId={book.id} isAdmin={isAdmin} />
             </div>
           </div>

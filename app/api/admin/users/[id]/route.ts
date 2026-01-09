@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserSessionSSR } from "@/lib/auth/server";
 import pool from "@/lib/db";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
+import { ROLE_LABELS } from "@/domain/types";
 import bcrypt from "bcrypt";
 
 interface RouteParams {
@@ -88,6 +89,123 @@ export async function GET(request: NextRequest, context: RouteParams) {
 /**
  * Handler PATCH - Aktualizacja użytkownika
  */
+async function performUpdate(requestBody: any, adminUserId: string, targetUserId: number) {
+  const { firstName, lastName, email, role, active, password } = requestBody;
+
+  // Pobierz stan przed zmianą
+  const [beforeState] = await pool.query<RowDataPacket[]>(
+    `SELECT * FROM uzytkownicy WHERE UzytkownikId = ?`,
+    [targetUserId]
+  );
+
+  if (beforeState.length === 0) {
+    return { status: 404, body: { error: "Użytkownik nie został znaleziony" } };
+  }
+
+  // Budowanie zapytania UPDATE
+  const updates: string[] = [];
+  const params: any[] = [];
+
+  if (firstName) {
+    updates.push("Imie = ?");
+    params.push(firstName);
+  }
+  if (lastName) {
+    updates.push("Nazwisko = ?");
+    params.push(lastName);
+  }
+  if (email) {
+    // Sprawdź czy email nie jest zajęty
+    const [existingEmail] = await pool.query<RowDataPacket[]>(
+      `SELECT UzytkownikId FROM uzytkownicy WHERE Email = ? AND UzytkownikId != ?`,
+      [email, targetUserId]
+    );
+
+    if (existingEmail.length > 0) {
+      return { status: 409, body: { error: "Ten adres email jest już zajęty" } };
+    }
+
+    updates.push("Email = ?");
+    params.push(email);
+  }
+  if (role) {
+    const roleMap: Record<string, string> = {
+      "ADMIN": "ADMIN",
+      "LIBRARIAN": "BIBLIOTEKARZ",
+      "READER": "CZYTELNIK"
+    };
+
+    const dbRoleName = roleMap[role];
+    if (dbRoleName) {
+      const [roleRow] = await pool.query<RowDataPacket[]>(
+        `SELECT RolaId FROM role WHERE NazwaRoli = ?`,
+        [dbRoleName]
+      );
+
+      if (roleRow.length > 0) {
+        updates.push("RolaId = ?");
+        params.push(roleRow[0].RolaId);
+      }
+    }
+  }
+  if (typeof active === "boolean") {
+    updates.push("Aktywny = ?");
+    params.push(active ? 1 : 0);
+  }
+  if (password) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    updates.push("HasloHash = ?");
+    params.push(hashedPassword);
+  }
+
+  if (updates.length === 0) {
+    return { status: 400, body: { error: "Brak danych do aktualizacji" } };
+  }
+
+  params.push(targetUserId);
+
+  await pool.query<ResultSetHeader>(
+    `UPDATE uzytkownicy SET ${updates.join(", ")} WHERE UzytkownikId = ?`,
+    params
+  );
+
+  // Przygotuj opis zmian (czytelny dla audytu)
+  const changes: string[] = [];
+  const before = beforeState[0];
+  if (firstName && firstName !== before.Imie) changes.push(`Imię: "${before.Imie}" → "${firstName}"`);
+  if (lastName && lastName !== before.Nazwisko) changes.push(`Nazwisko: "${before.Nazwisko}" → "${lastName}"`);
+  if (email && email !== before.Email) changes.push(`Email: "${before.Email}" → "${email}"`);
+  if (typeof active === "boolean" && (active ? 1 : 0) !== before.Aktywny) changes.push(`Status: "${before.Aktywny ? 'Aktywny' : 'Nieaktywny'}" → "${active ? 'Aktywny' : 'Nieaktywny'}"`);
+  if (role) {
+    // role in request is ADMIN|LIBRARIAN|READER
+    const beforeRoleRow = await pool.query<RowDataPacket[]>(`SELECT r.NazwaRoli FROM role r WHERE r.RolaId = ?`, [before.RolaId]) as any;
+    const beforeRoleName = (beforeRoleRow[0][0]?.NazwaRoli) || '';
+    const newRoleLabel = (ROLE_LABELS as any)[role] || role;
+    if (newRoleLabel && newRoleLabel !== beforeRoleName) {
+      changes.push(`Rola: "${beforeRoleName}" → "${newRoleLabel}"`);
+    }
+  }
+
+  const description = changes.length > 0 ? `Zaktualizowano użytkownika: ${changes.join('; ')}` : 'Zaktualizowano dane użytkownika';
+
+  // Log operacji z audytem (czytelny opis + pełny stan przed/po)
+  await pool.query(
+    `
+    INSERT INTO logi (TypCoSieStalo, UzytkownikId, Opis, Encja, EncjaId, StanPrzed, StanPo)
+    VALUES ('Audyt', ?, ?, 'Uzytkownicy', ?, ?, ?)
+    `,
+    [
+      adminUserId,
+      description,
+      targetUserId,
+      JSON.stringify(beforeState[0]),
+      JSON.stringify(requestBody)
+    ]
+  );
+
+  return { status: 200, body: { success: true, message: "Dane użytkownika zostały zaktualizowane" } };
+}
+
 export async function PATCH(request: NextRequest, context: RouteParams) {
   try {
     const user = await getUserSessionSSR();
@@ -100,114 +218,45 @@ export async function PATCH(request: NextRequest, context: RouteParams) {
     const userId = parseInt(id);
 
     const body = await request.json();
-    const { firstName, lastName, email, role, active, password } = body;
 
-    // Pobierz stan przed zmianą
-    const [beforeState] = await pool.query<RowDataPacket[]>(
-      `SELECT * FROM uzytkownicy WHERE UzytkownikId = ?`,
-      [userId]
-    );
+    const result = await performUpdate(body, user.id, userId);
 
-    if (beforeState.length === 0) {
-      return NextResponse.json(
-        { error: "Użytkownik nie został znaleziony" },
-        { status: 404 }
-      );
+    if (result.status !== 200) {
+      return NextResponse.json(result.body, { status: result.status });
     }
 
-    // Budowanie zapytania UPDATE
-    const updates: string[] = [];
-    const params: any[] = [];
-
-    if (firstName) {
-      updates.push("Imie = ?");
-      params.push(firstName);
-    }
-    if (lastName) {
-      updates.push("Nazwisko = ?");
-      params.push(lastName);
-    }
-    if (email) {
-      // Sprawdź czy email nie jest zajęty
-      const [existingEmail] = await pool.query<RowDataPacket[]>(
-        `SELECT UzytkownikId FROM uzytkownicy WHERE Email = ? AND UzytkownikId != ?`,
-        [email, userId]
-      );
-
-      if (existingEmail.length > 0) {
-        return NextResponse.json(
-          { error: "Ten adres email jest już zajęty" },
-          { status: 409 }
-        );
-      }
-
-      updates.push("Email = ?");
-      params.push(email);
-    }
-    if (role) {
-      const roleMap: Record<string, string> = {
-        "ADMIN": "ADMIN",
-        "LIBRARIAN": "BIBLIOTEKARZ",
-        "READER": "CZYTELNIK"
-      };
-
-      const dbRoleName = roleMap[role];
-      if (dbRoleName) {
-        const [roleRow] = await pool.query<RowDataPacket[]>(
-          `SELECT RolaId FROM role WHERE NazwaRoli = ?`,
-          [dbRoleName]
-        );
-
-        if (roleRow.length > 0) {
-          updates.push("RolaId = ?");
-          params.push(roleRow[0].RolaId);
-        }
-      }
-    }
-    if (typeof active === "boolean") {
-      updates.push("Aktywny = ?");
-      params.push(active ? 1 : 0);
-    }
-    if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      updates.push("HasloHash = ?");
-      params.push(hashedPassword);
-    }
-
-    if (updates.length === 0) {
-      return NextResponse.json(
-        { error: "Brak danych do aktualizacji" },
-        { status: 400 }
-      );
-    }
-
-    params.push(userId);
-
-    await pool.query<ResultSetHeader>(
-      `UPDATE uzytkownicy SET ${updates.join(", ")} WHERE UzytkownikId = ?`,
-      params
-    );
-
-    // Log operacji z audytem
-    await pool.query(
-      `
-      INSERT INTO logi (TypCoSieStalo, UzytkownikId, Opis, Encja, EncjaId, StanPrzed, StanPo)
-      VALUES ('Audyt', ?, 'Zaktualizowano dane użytkownika', 'Uzytkownicy', ?, ?, ?)
-      `,
-      [
-        user.id,
-        userId,
-        JSON.stringify(beforeState[0]),
-        JSON.stringify(body)
-      ]
-    );
-
-    return NextResponse.json({
-      success: true,
-      message: "Dane użytkownika zostały zaktualizowane"
-    });
+    return NextResponse.json(result.body);
   } catch (error) {
     console.error("Błąd API PATCH /api/admin/users/[id]:", error);
+    return NextResponse.json(
+      { error: "Błąd serwera" },
+      { status: 500 }
+    );
+  }
+}
+
+// Dodatkowy handler PUT - kompatybilność z frontendem wysyłającym PUT
+export async function PUT(request: NextRequest, context: RouteParams) {
+  try {
+    const user = await getUserSessionSSR();
+    
+    if (!user || user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Brak uprawnień" }, { status: 403 });
+    }
+
+    const { id } = await context.params;
+    const userId = parseInt(id);
+    const body = await request.json();
+
+    const result = await performUpdate(body, user.id, userId);
+
+    if (result.status !== 200) {
+      return NextResponse.json(result.body, { status: result.status });
+    }
+
+    return NextResponse.json(result.body);
+  } catch (error) {
+    console.error("Błąd API PUT /api/admin/users/[id]:", error);
     return NextResponse.json(
       { error: "Błąd serwera" },
       { status: 500 }

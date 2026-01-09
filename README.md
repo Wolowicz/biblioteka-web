@@ -936,7 +936,7 @@ git push origin feature/AmazingFeature
 
 ## 📄 Licencja
 
-Ten projekt został stworzony na potrzeby **pracy magisterskiej**.
+Ten projekt został stworzony na potrzeby **projektu na studiach**.
 
 ---
 
@@ -944,40 +944,8 @@ Ten projekt został stworzony na potrzeby **pracy magisterskiej**.
 
 **Wolowicz** - [GitHub](https://github.com/Wolowicz)
 
----
-
-## 📞 Kontakt
-
-W przypadku pytań lub problemów:
-- 🐛 **Issues**: [GitHub Issues](https://github.com/Wolowicz/biblioteka-web/issues)
-- 📧 **Email**: [kontakt przez GitHub]
 
 ---
-
-## 🙏 Podziękowania
-
-- **Next.js Team** - za świetny framework
-- **Vercel** - za platformę deployment
-- **Tailwind CSS** - za utility-first CSS
-- **Font Awesome** - za ikony
-
----
-
-## 📊 Status Projektu
-
-![Status](https://img.shields.io/badge/Status-Production-green)
-![Version](https://img.shields.io/badge/Version-1.0.0-blue)
-![Last Updated](https://img.shields.io/badge/Last%20Updated-Dec%202024-orange)
-
-**Wersja:** 1.0.0  
-**Data:** 14 grudnia 2024  
-**Status:** ✅ Gotowe do produkcji
-
----
-
-<div align="center">
-  
-**Made with ❤️ using Next.js**
 
 [⬆ Back to Top](#-biblioteq---system-zarządzania-biblioteką)
 
